@@ -17,15 +17,38 @@ class sql:
                 print(err)
 
     def add(self,sku,price):
-        mycursor = self.mydb.cursor()
+        cursor = self.mydb.cursor()
 
-        sql = "INSERT INTO WALMART (name, address) VALUES (%s, %s)"
+        sql = "INSERT INTO SKU (SKU, Price) VALUES (%s, %s)"
         val = (sku,price)
-        mycursor.execute(sql, val)
+        cursor.execute(sql, val)
 
         self.mydb.commit()
 
-        print(mycursor.rowcount, "record inserted.")
+        print(cursor.rowcount, "record inserted.")
+
+    def exist(self,sku):
+        """
+
+        :param sku: SKU of Walmart's item
+        :return:
+
+        If Exist: Cost of item
+        If Not Exist: False
+        """
+        cursor = self.mydb.cursor()
+        exist_statement = "SELECT Price FROM SKU WHERE SKU='{}'".format(sku)
+        cursor.execute(exist_statement)
+        result = cursor.fetchone()
+
+        if result == None:
+            return False
+        else:
+            return result[0]
+
+    def close(self):
+        self.mydb.close()
 
 test = sql()
-test.add("18934583",93.5)
+test.exist("1893458")
+#test.add("18934583",93.5)
