@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import re
 from database import sql
+import time
 class Walmart:
     def __init__(self):
         self.chrome_options = Options()
@@ -35,31 +36,52 @@ class Walmart:
             return float(matches[0])
         else:
             return None
-    def scrapeProduct(self,url):
+    def scrapeProduct(self,url,db):
         self.driver.get(url)
-        main_search_div = self.driver.find_element_by_id("mainSearchContent")
-        search_product_result_id = main_search_div.find_element_by_id("searchProductResult")
-        elements = search_product_result_id.find_elements_by_xpath("//li[contains(@data-tl-id,'ProductTileGridView')]")
-        if elements != NoSuchElementException:
-            count = 0
-            db = sql()
-            for elem in elements:
-                url =str(elem.find_element_by_css_selector("a[data-type='itemTitles']").get_attribute("href"))
-                location = url.rfind("/")
-                sku = url[location+1:len(url)]
-                price = self.filterPrice(elem.find_element_by_css_selector("span[class='search-result-productprice gridview enable-2price-2']").text)
-                if price != None and not db.exist(sku):
-                    db.add(sku,price)
-                elif db.exist(sku):
-                    print("The product with sku of {} already exists".format(sku))
+        try:
+            main_search_div = self.driver.find_element_by_id("mainSearchContent")
+            search_product_result_id = main_search_div.find_element_by_id("searchProductResult")
+            elements = search_product_result_id.find_elements_by_xpath("//li[contains(@data-tl-id,'ProductTileGridView')]")
+            data = []
+            if elements != NoSuchElementException:
+                count = 0
+                for elem in elements:
+                    try:
+                        url =str(elem.find_element_by_css_selector("a[data-type='itemTitles']").get_attribute("href"))
+                        location = url.rfind("/")
+                        sku = url[location+1:len(url)]
+                        price = self.filterPrice(elem.find_element_by_css_selector("span[class='search-result-productprice gridview enable-2price-2']").text)
 
-            db.close()
-        else:
-            print("No elements found on: ",url)
+                        if price != None and not db.exist(sku):
+                            data.append((sku,price))
+                            print("helo")
+                        elif db.exist(sku):
+                            print("The product with sku of {} already exists".format(sku))
+                    except NoSuchElementException:
+                        print("{} has problem with finding a[data-type='itemTitles'] or span[class='search-result-productprice gridview enable-2price-2']".format(url))
+                return data
+            else:
+                print("No elements found on: ",url)
+        except NoSuchElementException:
+            print("Error with {} either mainSearchContent or searchProductResult".format(url))
 
 
+websites=[]
 
+with open('websites.txt') as read:
+    for line in read:
+        if line[0] != '#':
+            websites.append(line.rstrip('\n'))
 test = Walmart()
-test.scrapeProduct("https://www.walmart.com/browse/electronics/3944?cat_id=3944&facet=pickup_and_delivery%3AFREE+Pickup+Today%7C%7Cretailer%3AWalmart.com&page=1&sort=best_seller")
-# test.scrape(2)
+database = sql()
+for link in websites:
+    for i in range(1,26):
+        html_tag = "?page="+str(i)
+        newurl=link+html_tag
+        data = test.scrapeProduct(newurl,database)
+        database.add(data)
+
+
+
+
 

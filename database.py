@@ -18,16 +18,15 @@ class sql:
             else:
                 print(err)
 
-    def add(self,sku,price):
+    def add(self,data):
         cursor = self.mydb.cursor()
 
         sql = "INSERT INTO SKU (SKU, Price) VALUES (%s, %s)"
-        val = (sku,price)
-        cursor.execute(sql, val)
+        cursor.executemany(sql, data)
 
         self.mydb.commit()
 
-        print(cursor.rowcount, "record inserted. with SKU value of ",sku,"and price of ",price)
+        print(cursor.rowcount, "record inserted")
 
     def exist(self,sku):
         """
