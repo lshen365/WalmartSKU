@@ -1,5 +1,7 @@
 import mysql.connector
 from mysql.connector import errorcode
+
+#Finding how much memory it takes https://stackoverflow.com/questions/6474591/how-can-you-determine-how-much-disk-space-a-particular-mysql-table-is-taking-up
 class sql:
 
     def __init__(self):
@@ -25,7 +27,7 @@ class sql:
 
         self.mydb.commit()
 
-        print(cursor.rowcount, "record inserted.")
+        print(cursor.rowcount, "record inserted. with SKU value of ",sku,"and price of ",price)
 
     def exist(self,sku):
         """
@@ -44,11 +46,7 @@ class sql:
         if result == None:
             return False
         else:
-            return result[0]
+            return True
 
     def close(self):
         self.mydb.close()
-
-test = sql()
-test.exist("1893458")
-#test.add("18934583",93.5)
