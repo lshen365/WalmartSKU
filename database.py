@@ -6,9 +6,12 @@ class sql:
 
     def __init__(self):
         try:
-            self.mydb = mysql.connector.connect(user='sql3346026', password='9NjuSrd8Sv',
-                                      host='sql3.freemysqlhosting.net',
-                                      database='sql3346026')
+            # self.mydb = mysql.connector.connect(user='sql3346026', password='9NjuSrd8Sv',
+            #                           host='sql3.freemysqlhosting.net',
+            #                           database='sql3346026')
+            self.mydb = mysql.connector.connect(user='Leon', password='teacher1',
+                                              host='73.181.19.81',
+                                              database='SKU')
             print("success")
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -49,3 +52,5 @@ class sql:
 
     def close(self):
         self.mydb.close()
+
+test = sql()

@@ -54,7 +54,6 @@ class Walmart:
 
                         if price != None and not db.exist(sku):
                             data.append((sku,price))
-                            print("helo")
                         elif db.exist(sku):
                             print("The product with sku of {} already exists".format(sku))
                     except NoSuchElementException:
