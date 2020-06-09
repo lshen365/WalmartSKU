@@ -77,8 +77,11 @@ for link in websites:
     for i in range(1,26):
         html_tag = "?page="+str(i)
         newurl=link+html_tag
+        time0=time.time()
         data = test.scrapeProduct(newurl,database)
         database.add(data)
+        time1=time.time()
+        print(time1-time0)
 
 
 
