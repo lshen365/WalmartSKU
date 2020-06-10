@@ -52,7 +52,7 @@ class Walmart:
                         sku = url[location+1:len(url)]
                         price = self.filterPrice(elem.find_element_by_css_selector("span[class='search-result-productprice gridview enable-2price-2']").text)
 
-                        if price != None and not db.exist(sku):
+                        if price != None and not db.exist(sku) and len(sku) < 16:
                             data.append((sku,price,desc))
                         elif db.exist(sku):
                             print("The product with sku of {} already exists".format(sku))
@@ -91,6 +91,7 @@ for position in range(len(websites)):
         link = websites[position]
         html_tag = "?page="+str(i)
         newurl=link+html_tag
+        print(newurl)
         time0=time.time()
         data = test.scrapeProduct(newurl,database,description)
         database.add(data)
