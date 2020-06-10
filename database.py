@@ -24,7 +24,7 @@ class sql:
     def add(self,data):
         cursor = self.mydb.cursor()
 
-        sql = "INSERT INTO SKU (SKU, Price) VALUES (%s, %s)"
+        sql = "INSERT INTO SKU (SKU, Price,Filter) VALUES (%s, %s, %s)"
         cursor.executemany(sql, data)
 
         self.mydb.commit()

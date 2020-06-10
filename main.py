@@ -36,7 +36,7 @@ class Walmart:
             return float(matches[0])
         else:
             return None
-    def scrapeProduct(self,url,db):
+    def scrapeProduct(self,url,db,desc):
         self.driver.get(url)
         try:
             main_search_div = self.driver.find_element_by_id("mainSearchContent")
@@ -53,7 +53,7 @@ class Walmart:
                         price = self.filterPrice(elem.find_element_by_css_selector("span[class='search-result-productprice gridview enable-2price-2']").text)
 
                         if price != None and not db.exist(sku):
-                            data.append((sku,price))
+                            data.append((sku,price,desc))
                         elif db.exist(sku):
                             print("The product with sku of {} already exists".format(sku))
                     except NoSuchElementException:
@@ -66,19 +66,33 @@ class Walmart:
 
 
 websites=[]
-
+filters = ['TV','Tablet/Accessories','Laptop/Desktop','Router','PC Parts','GPS','Camera','Drone','Camera','Headhones']
+locations = [] #Keeps a track of locations for each filter in the notepad
 with open('websites.txt') as read:
+    count = 0;
     for line in read:
         if line[0] != '#':
             websites.append(line.rstrip('\n'))
+            count+=1
+        else:
+            if count != 0:
+                locations.append(count)
+
+
+
 test = Walmart()
 database = sql()
-for link in websites:
+id = 0
+for position in range(len(websites)):
+    if position == (locations[id]):
+        id+=1
+    description = filters[id]
     for i in range(1,26):
+        link = websites[position]
         html_tag = "?page="+str(i)
         newurl=link+html_tag
         time0=time.time()
-        data = test.scrapeProduct(newurl,database)
+        data = test.scrapeProduct(newurl,database,description)
         database.add(data)
         time1=time.time()
         print(time1-time0)
