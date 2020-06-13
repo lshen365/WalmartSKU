@@ -50,6 +50,14 @@ class sql:
         else:
             return True
 
+    def filterByCategory(self,category):
+        cursor = self.mydb.cursor()
+        query = "SELECT SKU,Price FROM SKU WHERE Filter='{}'".format(category)
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def close(self):
         self.mydb.close()
 

@@ -1,8 +1,12 @@
-# import requests
-# from bs4 import BeautifulSoup
+import requests
+from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import re
 from database import sql
@@ -15,6 +19,7 @@ class Walmart:
         self.chrome_options.add_argument('--ignore-ssl-errors')
         self.driver = webdriver.Chrome(ChromeDriverManager().install(),options=self.chrome_options)
         #self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) This is for Raspberry Pi
+        self.filters = ['TV','Tablet/Accessories','Laptop/Desktop','Router','PC Parts','GPS','Camera','Drone','Camera','Headhones']
 
     # def createPage(self,url):
     #     html = self.driver.get(url)
@@ -37,6 +42,18 @@ class Walmart:
         else:
             return None
     def scrapeProduct(self,url,db,desc):
+        """
+        Scrapes all the products on the page with the SKU/Price
+
+        :param url: Link to the Walmart Page
+        :type url: String
+        :param db: Database instance
+        :type db: SQL Object
+        :param desc: Category of filter
+        :type desc: String
+        :return: Data = an array of tuples which contains the (SKU,Price) of each item on the page
+        :rtype: Array of Tuples
+        """
         self.driver.get(url)
         try:
             main_search_div = self.driver.find_element_by_id("mainSearchContent")
@@ -64,39 +81,152 @@ class Walmart:
         except NoSuchElementException:
             print("Error with {} either mainSearchContent or searchProductResult".format(url))
 
+    def loadDatabase(self,database):
+        """
 
-websites=[]
-filters = ['TV','Tablet/Accessories','Laptop/Desktop','Router','PC Parts','GPS','Camera','Drone','Camera','Headhones']
-locations = [] #Keeps a track of locations for each filter in the notepad
-with open('websites.txt') as read:
-    count = 0;
-    for line in read:
-        if line[0] != '#':
-            websites.append(line.rstrip('\n'))
-            count+=1
-        else:
-            if count != 0:
-                locations.append(count)
+        :param database: Database instance
+        :type database: Sql()
+        :return: N/A
+        :rtype: N/A
+        """
+        websites=[]
+        locations = [] #Keeps a track of locations for each filter in the notepad
+        with open('websites.txt') as read:
+            count = 0;
+            for line in read:
+                if line[0] != '#':
+                    websites.append(line.rstrip('\n'))
+                    count+=1
+                else:
+                    if count != 0:
+                        locations.append(count)
+        id = 0
+        for position in range(len(websites)):
+            if position == (locations[id]):
+                id+=1
+            description = self.filters[id]
+            for i in range(1,26):
+                link = websites[position]
+                html_tag = "?page="+str(i)
+                newurl=link+html_tag
+                print(newurl)
+                time0=time.time()
+                data = test.scrapeProduct(newurl,database,description)
+                database.add(data)
+                time1=time.time()
+                print(time1-time0)
+
+    def addCookies(self,zipcode):
+        """
+
+        :param zipcode: Zipcode of current location
+        :type zipcode: int
+        :return: N/A
+        :rtype: N/A
+        """
+        cookie = {"name": "bs_zip", "value" : str(zipcode)}
+        self.driver.get("https://brickseek.com")
+        self.driver.add_cookie(cookie)
+
+    def pricePageSource(self,sku):
+        url = "https://brickseek.com/walmart-inventory-checker/?sku="+sku
+        self.driver.get(url)
+
+        print("Click")
+        self.driver.find_element_by_xpath("//div[@class='grid__item-content']//button[@type='submit']").send_keys("\n")
+        try:
+
+            page = WebDriverWait(self.driver,10).until(
+
+                EC.presence_of_element_located((By.CLASS_NAME,'table__body'))
+            )
+            page_source = self.driver.page_source
+            #self.driver.close()
+            return page_source
+        except:
+            print("Product not available at current location")
+            return False
+
+    def isDiscounted(self,currPrice,originalPrice):
+        discount = 1-(currPrice/originalPrice)
+        if(discount > 0.5):
+            return True
+        return False
+
+    def checkSale(self, db): #Do NOT USE unless with VPN
+        """
+        Checks sales from Brickseek
+        :param db:
+        :type db:
+        :return:
+        :rtype:
+        """
+        elements = db.filterByCategory(self.filters[0])
+        page_source = self.pricePageSource("547940259")
+        if page_source != False:
+            soup = BeautifulSoup(page_source,'lxml')
+            locations = []
+            location_price = soup.find_all('div', class_='table__row')
+            for loc in location_price:
+                print("195775096",len(location_price))
+                #print(loc)
+                price = loc.find(class_="price-formatted__dollars")
+                if price != None:
+                    price = float(price.get_text())
+                    if self.isDiscounted(price,398):
+
+                        place = loc.find(class_="address")
+                        locations.append(place)
+                        print("Found discount")
+        #             else:
+        #                 print("no discount")
+        # for query in elements:
+        #     page_source = self.pricePageSource(query[0])
+        #     if page_source != False:
+        #         soup = BeautifulSoup(page_source,'lxml')
+        #         locations = []
+        #         location_price = soup.find_all('div', class_='table__row')
+        #         for loc in location_price:
+        #             price = loc.find(class_="price-formatted__dollars")
+        #             if price != None:
+        #                 price = float(price.get_text())
+        #                 if self.isDiscounted(price,query[1]):
+        #                     place = loc.find(class_="address")
+        #                     locations.append(place)
+        #                     print("Found discount",query[0],place)
+        #                 # else:
+        #                 #     print("no discount")
+
+    def walmartID(self):
+        """
+        Grabs all of Walmart's location ID's
+        :return:
+        :rtype:
+        """
+        self.driver.get("https://www.allstays.com/c/walmart-colorado-locations.htm")
+        stores = self.driver.find_elements_by_xpath("//a[@class='full-width button']")
+        id = []
+        for x in stores:
+            value = x.text[len(x.text)-4:len(x.text)]
+            id.append(value)
+        print(len(id))
+
+        self.driver.close()
+
+    def checkWalmart(self):
+        #https://www.walmart.com/store/1045/search?query=247544454
 
 
 
-test = Walmart()
+
 database = sql()
-id = 0
-for position in range(len(websites)):
-    if position == (locations[id]):
-        id+=1
-    description = filters[id]
-    for i in range(1,26):
-        link = websites[position]
-        html_tag = "?page="+str(i)
-        newurl=link+html_tag
-        print(newurl)
-        time0=time.time()
-        data = test.scrapeProduct(newurl,database,description)
-        database.add(data)
-        time1=time.time()
-        print(time1-time0)
+test = Walmart()
+test.walmartID()
+# test.loadDatabase(database)
+# test.addCookies(80016)
+# test.checkSale(database)
+database.close()
+
 
 
 
