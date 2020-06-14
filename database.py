@@ -31,7 +31,7 @@ class sql:
 
         print(cursor.rowcount, "record inserted")
 
-    def exist(self,sku):
+    def exist(self,sku,table):
         """
 
         :param sku: SKU of Walmart's item
@@ -41,7 +41,7 @@ class sql:
         If Not Exist: False
         """
         cursor = self.mydb.cursor()
-        exist_statement = "SELECT Price FROM SKU WHERE SKU='{}'".format(sku)
+        exist_statement = f"SELECT Price FROM {table} WHERE SKU='{sku}'"
         cursor.execute(exist_statement)
         result = cursor.fetchone()
 
@@ -57,6 +57,21 @@ class sql:
         result = cursor.fetchall()
         cursor.close()
         return result
+
+    def createStoreTable(self,id):
+        cursor = self.mydb.cursor()
+        query = f"CREATE TABLE Walmart{id} (sku VARCHAR(16),price int(11),availability BOOLEAN,location VARCHAR(60))"
+        print("Successfully created a database")
+        cursor.execute(query)
+        cursor.close()
+
+    def insertStoreEntry(self,store_id,sku,price,exist,location):
+        cursor = self.mydb.cursor()
+        query = f"INSERT INTO Walmart869 (sku, Price, availability, location) VALUES ('{sku}',{price},{exist},'{location}')"
+        print(f"Successfully inserted Walmart{store_id} with SKU={sku} entry")
+        cursor.execute(query)
+        cursor.close()
+        self.mydb.commit()
 
     def close(self):
         self.mydb.close()

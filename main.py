@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -10,22 +10,26 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import re
 from database import sql
+from joblib import Parallel, delayed
 import time
+
+
 class Walmart:
     def __init__(self):
         self.chrome_options = Options()
         self.chrome_options.add_argument("--headless")
-        self.chrome_options.add_argument('--ignore-certificate-errors')
-        self.chrome_options.add_argument('--ignore-ssl-errors')
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(),options=self.chrome_options)
-        #self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) This is for Raspberry Pi
-        self.filters = ['TV','Tablet/Accessories','Laptop/Desktop','Router','PC Parts','GPS','Camera','Drone','Camera','Headhones']
+        prefs = {"profile.managed_default_content_settings.images": 2}
+        self.chrome_options.add_experimental_option("prefs", prefs)
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
+        # self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) This is for Raspberry Pi
+        self.filters = ['TV', 'Tablet/Accessories', 'Laptop/Desktop', 'Router', 'PC Parts', 'GPS', 'Camera', 'Drone',
+                        'Camera', 'Headhones']
 
     # def createPage(self,url):
     #     html = self.driver.get(url)
     #     return html
 
-    def filterPrice(self,text):
+    def filterPrice(self, text):
         """
         Helper function to filter out the price and random unecessary text.
 
@@ -34,14 +38,17 @@ class Walmart:
         Float-  The actual price which can be added into the database
         """
         regex = "(\d+.\d+)"
-        matches = re.findall(regex,text)
-        if len(matches) == 4: #Lists current price twice and non-sale price twice which accounts for 4. Matching the max
+        matches = re.findall(regex, text)
+        if len(
+                matches) == 4:  # Lists current price twice and non-sale price twice which accounts for 4. Matching the max
             return float(matches[2])
-        elif len(matches) == 2: #If there is no sale, then there will be two matches as current price will be listed twice
+        elif len(
+                matches) == 2:  # If there is no sale, then there will be two matches as current price will be listed twice
             return float(matches[0])
         else:
             return None
-    def scrapeProduct(self,url,db,desc):
+
+    def scrapeProduct(self, url, db, desc):
         """
         Scrapes all the products on the page with the SKU/Price
 
@@ -58,30 +65,34 @@ class Walmart:
         try:
             main_search_div = self.driver.find_element_by_id("mainSearchContent")
             search_product_result_id = main_search_div.find_element_by_id("searchProductResult")
-            elements = search_product_result_id.find_elements_by_xpath("//li[contains(@data-tl-id,'ProductTileGridView')]")
+            elements = search_product_result_id.find_elements_by_xpath(
+                "//li[contains(@data-tl-id,'ProductTileGridView')]")
             data = []
             if elements != NoSuchElementException:
                 count = 0
                 for elem in elements:
                     try:
-                        url =str(elem.find_element_by_css_selector("a[data-type='itemTitles']").get_attribute("href"))
+                        url = str(elem.find_element_by_css_selector("a[data-type='itemTitles']").get_attribute("href"))
                         location = url.rfind("/")
-                        sku = url[location+1:len(url)]
-                        price = self.filterPrice(elem.find_element_by_css_selector("span[class='search-result-productprice gridview enable-2price-2']").text)
+                        sku = url[location + 1:len(url)]
+                        price = self.filterPrice(elem.find_element_by_css_selector(
+                            "span[class='search-result-productprice gridview enable-2price-2']").text)
 
-                        if price != None and not db.exist(sku) and len(sku) < 16:
-                            data.append((sku,price,desc))
-                        elif db.exist(sku):
+                        if price != None and not db.exist(sku,'SKU') and len(sku) < 16:
+                            data.append((sku, price, desc))
+                        elif db.exist(sku,'SKU'):
                             print("The product with sku of {} already exists".format(sku))
                     except NoSuchElementException:
-                        print("{} has problem with finding a[data-type='itemTitles'] or span[class='search-result-productprice gridview enable-2price-2']".format(url))
+                        print(
+                            "{} has problem with finding a[data-type='itemTitles'] or span[class='search-result-productprice gridview enable-2price-2']".format(
+                                url))
                 return data
             else:
-                print("No elements found on: ",url)
+                print("No elements found on: ", url)
         except NoSuchElementException:
             print("Error with {} either mainSearchContent or searchProductResult".format(url))
 
-    def loadDatabase(self,database):
+    def loadDatabase(self, database):
         """
 
         :param database: Database instance
@@ -89,34 +100,34 @@ class Walmart:
         :return: N/A
         :rtype: N/A
         """
-        websites=[]
-        locations = [] #Keeps a track of locations for each filter in the notepad
+        websites = []
+        locations = []  # Keeps a track of locations for each filter in the notepad
         with open('websites.txt') as read:
-            count = 0;
+            count = 0
             for line in read:
                 if line[0] != '#':
                     websites.append(line.rstrip('\n'))
-                    count+=1
+                    count += 1
                 else:
                     if count != 0:
                         locations.append(count)
         id = 0
         for position in range(len(websites)):
             if position == (locations[id]):
-                id+=1
+                id += 1
             description = self.filters[id]
-            for i in range(1,26):
+            for i in range(1, 26):
                 link = websites[position]
-                html_tag = "?page="+str(i)
-                newurl=link+html_tag
+                html_tag = "?page=" + str(i)
+                newurl = link + html_tag
                 print(newurl)
-                time0=time.time()
-                data = test.scrapeProduct(newurl,database,description)
+                time0 = time.time()
+                data = test.scrapeProduct(newurl, database, description)
                 database.add(data)
-                time1=time.time()
-                print(time1-time0)
+                time1 = time.time()
+                print(time1 - time0)
 
-    def addCookies(self,zipcode):
+    def addCookies(self, zipcode):
         """
 
         :param zipcode: Zipcode of current location
@@ -124,36 +135,36 @@ class Walmart:
         :return: N/A
         :rtype: N/A
         """
-        cookie = {"name": "bs_zip", "value" : str(zipcode)}
+        cookie = {"name": "bs_zip", "value": str(zipcode)}
         self.driver.get("https://brickseek.com")
         self.driver.add_cookie(cookie)
 
-    def pricePageSource(self,sku):
-        url = "https://brickseek.com/walmart-inventory-checker/?sku="+sku
+    def pricePageSource(self, sku):
+        url = "https://brickseek.com/walmart-inventory-checker/?sku=" + sku
         self.driver.get(url)
 
         print("Click")
         self.driver.find_element_by_xpath("//div[@class='grid__item-content']//button[@type='submit']").send_keys("\n")
         try:
 
-            page = WebDriverWait(self.driver,10).until(
+            page = WebDriverWait(self.driver, 10).until(
 
-                EC.presence_of_element_located((By.CLASS_NAME,'table__body'))
+                EC.presence_of_element_located((By.CLASS_NAME, 'table__body'))
             )
             page_source = self.driver.page_source
-            #self.driver.close()
+            # self.driver.close()
             return page_source
         except:
             print("Product not available at current location")
             return False
 
-    def isDiscounted(self,currPrice,originalPrice):
-        discount = 1-(currPrice/originalPrice)
-        if(discount > 0.5):
+    def isDiscounted(self, currPrice, originalPrice):
+        discount = 1 - (currPrice / originalPrice)
+        if (discount > 0.5):
             return True
         return False
 
-    def checkSale(self, db): #Do NOT USE unless with VPN
+    def brickseekSale(self, db):  # Do NOT USE unless with VPN
         """
         Checks sales from Brickseek
         :param db:
@@ -163,23 +174,25 @@ class Walmart:
         """
         elements = db.filterByCategory(self.filters[0])
         page_source = self.pricePageSource("547940259")
-        if page_source != False:
-            soup = BeautifulSoup(page_source,'lxml')
-            locations = []
-            location_price = soup.find_all('div', class_='table__row')
-            for loc in location_price:
-                print("195775096",len(location_price))
-                #print(loc)
-                price = loc.find(class_="price-formatted__dollars")
-                if price != None:
-                    price = float(price.get_text())
-                    if self.isDiscounted(price,398):
-
-                        place = loc.find(class_="address")
-                        locations.append(place)
-                        print("Found discount")
-        #             else:
+        # Test code
+        # if page_source != False:
+        #     soup = BeautifulSoup(page_source,'lxml')
+        #     locations = []
+        #     location_price = soup.find_all('div', class_='table__row')
+        #     for loc in location_price:
+        #         print("195775096",len(location_price))
+        #         #print(loc)
+        #         price = loc.find(class_="price-formatted__dollars")
+        #         if price != None:
+        #             price = float(price.get_text())
+        #             if self.isDiscounted(price,398):
+        #
+        #                 place = loc.find(class_="address")
+        #                 locations.append(place)
+        #                 print("Found discount")
+        # #             else:
         #                 print("no discount")
+        # Works for websites
         # for query in elements:
         #     page_source = self.pricePageSource(query[0])
         #     if page_source != False:
@@ -207,28 +220,90 @@ class Walmart:
         stores = self.driver.find_elements_by_xpath("//a[@class='full-width button']")
         id = []
         for x in stores:
-            value = x.text[len(x.text)-4:len(x.text)]
+            value = x.text[len(x.text) - 4:len(x.text)]
             id.append(value)
         print(len(id))
 
         self.driver.close()
 
-    def checkWalmart(self):
-        #https://www.walmart.com/store/1045/search?query=247544454
+    def loadWalmartId(self):
+        self.storeID = []
+        with open('WalmartID.txt') as read:
+            for line in read:
+                if line[0] != '#':
+                    self.storeID.append(line.rstrip('\n'))
+
+    def getProductPageSource(self,url):
+        self.driver.get(url)
+        return self.driver.page_source
 
 
+    def searchWalmart(self, url):
+        """
+        Returns the product name, price, and location
+        :param url: Link of website
+        :type url: String
+        :return: Product Name, Price, and Location
+        :rtype: String, String, String
+        """
+        #OOS 476550098
+        #Not available 791149058
+        page_source = self.getProductPageSource(url)
+        soup = BeautifulSoup(page_source,'lxml')
+        item_name = soup.find(class_="tile-title")
+        item_price = soup.find(class_="price-characteristic")
+        item_location = soup.find(class_="tile-in-store-info")
+        if item_name != None:
+            item_name = item_name.get_text()
+        if item_price != None:
+            item_price = item_price.get_text()
+        if item_location != None:
+            item_location = item_location.get_text()
+
+        return item_name,item_price,item_location
 
 
+    def addToLink(self, count, sku, id, link):
+        if count != 0 and count % 2 == 0:
+            return f"https://www.walmart.com/store/{id}/search?query={sku}"
+        elif count == 0:
+            return link + sku
+        else:
+            return link + "%20" + sku
+
+    def checkWalmart(self, db, category):
+        filterQueries = db.filterByCategory(category)
+        # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
+        for id in self.storeID:
+            count = 0
+            link = f"https://www.walmart.com/store/{id}/search?query="
+            for query in filterQueries:
+                link = link+query[0]
+                print(link)
+                item_name,item_price,item_location = self.searchWalmart(link)
+                if db.exist(query[0],f"Walmart{id}"):
+                    print(f"{query[0]} already exists in the database with store id {id}")
+                else:
+                    if item_name != None:
+                        if item_price == None:
+                            db.insertStoreEntry(id,query[0],-1,True,item_location)
+                        else:
+                            db.insertStoreEntry(id,query[0],int(item_price),True,item_location)
+                    else:
+                        db.insertStoreEntry(id,query[0],-1,False,"None")
+                link = f"https://www.walmart.com/store/{id}/search?query="
+            print(link)
+
+    def test(self,db):
+        for id in self.storeID:
+            db.createStoreTable(id)
 database = sql()
 test = Walmart()
-test.walmartID()
+test.loadWalmartId()
 # test.loadDatabase(database)
 # test.addCookies(80016)
 # test.checkSale(database)
+# test.checkWalmart(database,"TV")
+test.checkWalmart(database, "TV")
+# test.test(database)
 database.close()
-
-
-
-
-
-
