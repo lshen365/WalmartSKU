@@ -44,7 +44,7 @@ class sql:
         exist_statement = f"SELECT Price FROM {table} WHERE SKU='{sku}'"
         cursor.execute(exist_statement)
         result = cursor.fetchone()
-
+        cursor.close()
         if result == None:
             return False
         else:
@@ -75,5 +75,3 @@ class sql:
 
     def close(self):
         self.mydb.close()
-
-test = sql()

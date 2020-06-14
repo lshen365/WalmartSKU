@@ -16,11 +16,11 @@ import time
 
 class Walmart:
     def __init__(self):
-        self.chrome_options = Options()
-        self.chrome_options.add_argument("--headless")
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        self.chrome_options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
+        # self.chrome_options = Options()
+        # self.chrome_options.add_argument("--headless")
+        # prefs = {"profile.managed_default_content_settings.images": 2}
+        # self.chrome_options.add_experimental_option("prefs", prefs)
+        # self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
         # self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) This is for Raspberry Pi
         self.filters = ['TV', 'Tablet/Accessories', 'Laptop/Desktop', 'Router', 'PC Parts', 'GPS', 'Camera', 'Drone',
                         'Camera', 'Headhones']
@@ -234,8 +234,15 @@ class Walmart:
                     self.storeID.append(line.rstrip('\n'))
 
     def getProductPageSource(self,url):
+        self.chrome_options = Options()
+        self.chrome_options.add_argument("--headless")
+        prefs = {"profile.managed_default_content_settings.images": 2}
+        self.chrome_options.add_experimental_option("prefs", prefs)
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
         self.driver.get(url)
-        return self.driver.page_source
+        page_source = self.driver.page_source
+        self.driver.quit()
+        return page_source
 
 
     def searchWalmart(self, url):
@@ -271,27 +278,31 @@ class Walmart:
         else:
             return link + "%20" + sku
 
+    def runParallel(self,sku,id):
+        db = sql()
+
+        link = f"https://www.walmart.com/store/{id}/search?query="
+        if db.exist(sku,f"Walmart{id}"):
+            print(f"{sku} already exists in the database with store id {id}")
+        else:
+            link = link+sku
+            print(link)
+            item_name,item_price,item_location = self.searchWalmart(link)
+            if item_name != None:
+                if item_price == None:
+                    db.insertStoreEntry(id,sku,-1,True,item_location)
+                else:
+                    db.insertStoreEntry(id,sku,int(item_price),True,item_location)
+            else:
+                db.insertStoreEntry(id,sku,-1,False,"None")
+        db.close()
+
     def checkWalmart(self, db, category):
         filterQueries = db.filterByCategory(category)
         # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
         for id in self.storeID:
             count = 0
-            link = f"https://www.walmart.com/store/{id}/search?query="
-            for query in filterQueries:
-                if db.exist(query[0],f"Walmart{id}"):
-                    print(f"{query[0]} already exists in the database with store id {id}")
-                else:
-                    link = link+query[0]
-                    print(link)
-                    item_name,item_price,item_location = self.searchWalmart(link)
-                    if item_name != None:
-                        if item_price == None:
-                            db.insertStoreEntry(id,query[0],-1,True,item_location)
-                        else:
-                            db.insertStoreEntry(id,query[0],int(item_price),True,item_location)
-                    else:
-                        db.insertStoreEntry(id,query[0],-1,False,"None")
-                link = f"https://www.walmart.com/store/{id}/search?query="
+            test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0],id) for query in filterQueries)
 
     def test(self,db):
         for id in self.storeID:
