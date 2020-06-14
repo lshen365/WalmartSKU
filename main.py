@@ -238,7 +238,7 @@ class Walmart:
         self.chrome_options.add_argument("--headless")
         prefs = {"profile.managed_default_content_settings.images": 2}
         self.chrome_options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
+        self.driver = webdriver.Chrome(options=self.chrome_options)
         self.driver.get(url)
         page_source = self.driver.page_source
         self.driver.quit()
