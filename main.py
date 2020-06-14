@@ -278,12 +278,12 @@ class Walmart:
             count = 0
             link = f"https://www.walmart.com/store/{id}/search?query="
             for query in filterQueries:
-                link = link+query[0]
-                print(link)
-                item_name,item_price,item_location = self.searchWalmart(link)
                 if db.exist(query[0],f"Walmart{id}"):
                     print(f"{query[0]} already exists in the database with store id {id}")
                 else:
+                    link = link+query[0]
+                    print(link)
+                    item_name,item_price,item_location = self.searchWalmart(link)
                     if item_name != None:
                         if item_price == None:
                             db.insertStoreEntry(id,query[0],-1,True,item_location)
@@ -292,7 +292,6 @@ class Walmart:
                     else:
                         db.insertStoreEntry(id,query[0],-1,False,"None")
                 link = f"https://www.walmart.com/store/{id}/search?query="
-            print(link)
 
     def test(self,db):
         for id in self.storeID:

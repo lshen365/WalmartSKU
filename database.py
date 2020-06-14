@@ -67,7 +67,7 @@ class sql:
 
     def insertStoreEntry(self,store_id,sku,price,exist,location):
         cursor = self.mydb.cursor()
-        query = f"INSERT INTO Walmart869 (sku, Price, availability, location) VALUES ('{sku}',{price},{exist},'{location}')"
+        query = f"INSERT INTO Walmart{store_id} (sku, Price, availability, location) VALUES ('{sku}',{price},{exist},'{location}')"
         print(f"Successfully inserted Walmart{store_id} with SKU={sku} entry")
         cursor.execute(query)
         cursor.close()
