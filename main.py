@@ -278,22 +278,25 @@ class Walmart:
             return link + "%20" + sku
 
     def runParallel(self,sku,id):
-        db = sql()
+        try:
+            db = sql()
 
-        link = f"https://www.walmart.com/store/electrode/api/search?query={sku}&stores={id}"
-        if db.exist(sku,f"Walmart{id}"):
-            print(f"{sku} already exists in the database with store id {id}")
-        else:
-            print(link)
-            item_name,item_price,item_location = self.searchWalmart(link)
-            if item_name != None:
-                if item_price == None:
-                    db.insertStoreEntry(id,sku,-1,True,item_location)
-                else:
-                    db.insertStoreEntry(id,sku,int(float(item_price)),True,item_location)
+            link = f"https://www.walmart.com/store/electrode/api/search?query={sku}&stores={id}"
+            if db.exist(sku,f"Walmart{id}"):
+                print(f"{sku} already exists in the database with store id {id}")
             else:
-                db.insertStoreEntry(id,sku,-1,False,"None")
-        db.close()
+                print(link)
+                item_name,item_price,item_location = self.searchWalmart(link)
+                if item_name != None:
+                    if item_price == None:
+                        db.insertStoreEntry(id,sku,-1,True,item_location)
+                    else:
+                        db.insertStoreEntry(id,sku,int(float(item_price)),True,item_location)
+                else:
+                    db.insertStoreEntry(id,sku,-1,False,"None")
+            db.close()
+        except:
+            print("Error with Connection to database")
 
     def checkWalmart(self, db, category):
         filterQueries = db.filterByCategory(category)
