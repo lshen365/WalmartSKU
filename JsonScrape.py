@@ -1,4 +1,3 @@
-import json
 import requests
 class jsonLocator():
 
@@ -9,10 +8,13 @@ class jsonLocator():
     def doesExist(self):
         if self.r.status_code != 200:
             return False
-        if self.json_data['items'] == []:
+        try:
+            if self.json_data['items'] == []:
+                return False
+            else:
+                return True
+        except:
             return False
-        else:
-            return True
 
     def getTitle(self):
         return self.json_data['items'][0]['title']
