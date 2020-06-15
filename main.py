@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -12,7 +11,7 @@ import re
 from database import sql
 from joblib import Parallel, delayed
 import time
-
+from JsonScrape import jsonLocator
 
 class Walmart:
     def __init__(self):
@@ -255,19 +254,19 @@ class Walmart:
         """
         #OOS 476550098
         #Not available 791149058
-        page_source = self.getProductPageSource(url)
-        soup = BeautifulSoup(page_source,'lxml')
-        item_name = soup.find(class_="tile-title")
-        item_price = soup.find(class_="price-characteristic")
-        item_location = soup.find(class_="tile-in-store-info")
-        if item_name != None:
-            item_name = item_name.get_text()
-        if item_price != None:
-            item_price = item_price.get_text()
-        if item_location != None:
-            item_location = item_location.get_text()
+        walmart_json = jsonLocator(url)
+        if walmart_json.doesExist():
+            item_name = walmart_json.getTitle()
+            item_price = None
+            if walmart_json.getAvailability() == 1:
+                item_price = walmart_json.getPrice()
+            item_location = walmart_json.getStoreInventory()
+            if walmart_json.getIsleLocation() != None:
+                item_location+="| "+walmart_json.getIsleLocation()
+            print("found")
+            return item_name,item_price,item_location
 
-        return item_name,item_price,item_location
+        return None,None,None
 
 
     def addToLink(self, count, sku, id, link):
@@ -281,18 +280,17 @@ class Walmart:
     def runParallel(self,sku,id):
         db = sql()
 
-        link = f"https://www.walmart.com/store/{id}/search?query="
+        link = f"https://www.walmart.com/store/electrode/api/search?query={sku}&stores={id}"
         if db.exist(sku,f"Walmart{id}"):
             print(f"{sku} already exists in the database with store id {id}")
         else:
-            link = link+sku
             print(link)
             item_name,item_price,item_location = self.searchWalmart(link)
             if item_name != None:
                 if item_price == None:
                     db.insertStoreEntry(id,sku,-1,True,item_location)
                 else:
-                    db.insertStoreEntry(id,sku,int(item_price),True,item_location)
+                    db.insertStoreEntry(id,sku,int(float(item_price)),True,item_location)
             else:
                 db.insertStoreEntry(id,sku,-1,False,"None")
         db.close()
@@ -313,7 +311,5 @@ test.loadWalmartId()
 # test.loadDatabase(database)
 # test.addCookies(80016)
 # test.checkSale(database)
-# test.checkWalmart(database,"TV")
-test.checkWalmart(database, "TV")
-# test.test(database)
+test.checkWalmart(database,"TV")
 database.close()
