@@ -41,7 +41,7 @@ class sql:
         If Not Exist: False
         """
         cursor = self.mydb.cursor()
-        exist_statement = f"SELECT Price FROM {table} WHERE SKU='{sku}'"
+        exist_statement = "SELECT Price FROM {} WHERE SKU='{}'".format(table,sku)
         cursor.execute(exist_statement)
         result = cursor.fetchone()
         cursor.close()
@@ -60,15 +60,15 @@ class sql:
 
     def createStoreTable(self,id):
         cursor = self.mydb.cursor()
-        query = f"CREATE TABLE Walmart{id} (sku VARCHAR(16),price int(11),availability BOOLEAN,location VARCHAR(60))"
+        query = "CREATE TABLE Walmart{} (sku VARCHAR(16),price int(11),availability BOOLEAN,location VARCHAR(60))".format(id)
         print("Successfully created a database")
         cursor.execute(query)
         cursor.close()
 
     def insertStoreEntry(self,store_id,sku,price,exist,location):
         cursor = self.mydb.cursor()
-        query = f"INSERT INTO Walmart{store_id} (sku, Price, availability, location) VALUES ('{sku}',{price},{exist},'{location}')"
-        print(f"Successfully inserted Walmart{store_id} with SKU={sku} entry")
+        query = "INSERT INTO Walmart{} (sku, Price, availability, location) VALUES ('{}',{},{},'{}')".format(store_id,sku,price,exist,location)
+        print("Successfully inserted Walmart{} with SKU={} entry".format(store_id,sku))
         cursor.execute(query)
         cursor.close()
         self.mydb.commit()

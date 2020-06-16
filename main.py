@@ -1,12 +1,9 @@
-import requests
-from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 import re
 from database import sql
 from joblib import Parallel, delayed
@@ -15,14 +12,13 @@ from JsonScrape import jsonLocator
 
 class Walmart:
     def __init__(self):
-        # self.chrome_options = Options()
-        # self.chrome_options.add_argument("--headless")
-        # prefs = {"profile.managed_default_content_settings.images": 2}
-        # self.chrome_options.add_experimental_option("prefs", prefs)
-        # self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options)
+        self.chrome_options = Options()
+        self.chrome_options.add_argument("--headless")
+        prefs = {"profile.managed_default_content_settings.images": 2}
+        self.chrome_options.add_experimental_option("prefs", prefs)
+        self.driver = webdriver.Chrome(options=self.chrome_options)
         # self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) This is for Raspberry Pi
-        self.filters = ['TV', 'Tablet/Accessories', 'Laptop/Desktop', 'Router', 'PC Parts', 'GPS', 'Camera', 'Drone',
-                        'Camera', 'Headhones']
+        self.filters = ['TV', 'Audio','Phone Case','Screen Protector','Cell Phone Accessories','Power Banks','Security Camera','Streaming Device','Smart Device','iPad/Tablet','Desktop/Laptop','Router','PC Parts','GPS','Camera','Drone','Camera Accessories','Headphones','Bluetooth Speakers','Garden']
 
     # def createPage(self,url):
     #     html = self.driver.get(url)
@@ -110,6 +106,7 @@ class Walmart:
                 else:
                     if count != 0:
                         locations.append(count)
+        print(locations)
         id = 0
         for position in range(len(websites)):
             if position == (locations[id]):
@@ -271,7 +268,7 @@ class Walmart:
 
     def addToLink(self, count, sku, id, link):
         if count != 0 and count % 2 == 0:
-            return f"https://www.walmart.com/store/{id}/search?query={sku}"
+            return "https://www.walmart.com/store/{}/search?query={}".format(id,sku)
         elif count == 0:
             return link + sku
         else:
@@ -281,9 +278,10 @@ class Walmart:
         try:
             db = sql()
 
-            link = f"https://www.walmart.com/store/electrode/api/search?query={sku}&stores={id}"
-            if db.exist(sku,f"Walmart{id}"):
-                print(f"{sku} already exists in the database with store id {id}")
+            link = "https://www.walmart.com/store/electrode/api/search?query={}&stores={}".format(sku,id)
+            print(link)
+            if db.exist(sku,"Walmart{}".format(id)):
+                print("{} already exists in the database with store id {}".format(sku,id))
             else:
                 print(link)
                 item_name,item_price,item_location = self.searchWalmart(link)
@@ -303,7 +301,7 @@ class Walmart:
         # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
         for id in self.storeID:
             count = 0
-            test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0],id) for query in filterQueries)
+            test = Parallel(n_jobs=20)(delayed(self.runParallel)(query[0],id) for query in filterQueries)
 
     def test(self,db):
         for id in self.storeID:
@@ -311,8 +309,7 @@ class Walmart:
 database = sql()
 test = Walmart()
 test.loadWalmartId()
-# test.loadDatabase(database)
-# test.addCookies(80016)
+test.loadDatabase(database)
 # test.checkSale(database)
-test.checkWalmart(database,"TV")
+# test.checkWalmart(database,"headhones")
 database.close()

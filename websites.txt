@@ -4,10 +4,45 @@ https://www.walmart.com/browse/electronics/smart-tvs/3944_1060825_1229815_122981
 https://www.walmart.com/browse/electronics/shop-tvs-by-size/3944_1060825_2489948
 https://www.walmart.com/browse/electronics/tv-accessories/3944_1060825_133270
 https://www.walmart.com/browse/electronics/dvd-blu-ray-players/3944_77622_7549938_1229631_95987
+#Audio
+https://www.walmart.com/browse/electronics/sound-bars/3944_77622_8375901_1230415_1107398
+https://www.walmart.com/browse/electronics/wireless-home-speakers/3944_77622_8375901_1230415_1230429
+https://www.walmart.com/browse/electronics/home-theater-systems/3944_77622_7549938_650659
+https://www.walmart.com/browse/electronics/dvd-blu-ray-players/3944_77622_7549938_1229631_95987
+https://www.walmart.com/browse/tv-video/projectors/3944_1060825_2133804
+https://www.walmart.com/browse/electronics/stereo-shelf-systems/3944_77622_8375901_96890_430957
+https://www.walmart.com/browse/electronics/subwoofers/3944_77622_8375901_1230415_1230416
+https://www.walmart.com/browse/electronics/cd-changers-turntables/3944_77622_8375901_96890_49600
+https://www.walmart.com/browse/electronics/receivers-amplifiers/3944_77622_8375901_96890_4478
+https://www.walmart.com/browse/electronics/dvr-dvd-recorders/3944_77622_7549938_1229631_1225174
+#Cell Phone Cases
+https://www.walmart.com/browse/cell-phones/phone-cases/1105910_133161_1997952
+#Screen Protector
+https://www.walmart.com/browse/cell-phones/screen-protectors/1105910_133161_1103334
+#Cell Phone Accessories
+https://www.walmart.com/browse/cellphone-accessories/chargers/1105910_133161_1072306
+https://www.walmart.com/browse/cell-phones/cell-phone-parts-by-compatible-phone/1105910_133161_2752670_5220393
+https://www.walmart.com/browse/cellphone-accessories/cell-phone-photography-accessories/1105910_133161_9274827
+https://www.walmart.com/browse/cell-phones/mobile-hotspots-signal-boosters/1105910_1163447
+https://www.walmart.com/browse/cell-phones/cell-phone-grips-stands/1105910_133161_4859362
+https://www.walmart.com/browse/cellphone-accessories/car-mounts/1105910_133161_1072308
+#Power Banks
+https://www.walmart.com/browse/cellphone-accessories/power-banks/1105910_133161_1087421
+#Security Camera
+https://www.walmart.com/browse/electronics/security-cameras/3944_1229875_6357978_5718781_9232158
+#Streaming Device
+https://www.walmart.com/browse/electronics/streaming-devices/3944_77622_7549938_1229631_1085065
+#Smart Device
+https://www.walmart.com/browse/electronics/smart-home-assistants/3944_1229875_9098006_9752343_2039074
+https://www.walmart.com/browse/electronics/smart-energy-and-lighting/3944_1229875_4592199
+https://www.walmart.com/browse/electronics/smart-alarms-detectors-sensors/3944_1229875_6357978_2890013
+https://www.walmart.com/browse/electronics/smart-switches-outlets-dimmers/3944_1229875_4592199_1522536
+https://www.walmart.com/browse/electronics/smart-thermostats/3944_1229875_4592199_9510136_7483114
+https://www.walmart.com/browse/electronics/smart-home-access/3944_1229875_6357978_1369584
 #iPad/Tablet
 https://www.walmart.com/browse/electronics/ipad-tablet-accessories/3944_1078524_1225368
 https://www.walmart.com/browse/ipad-tablets/tablet-pcs/3944_1078524_1078084/
-#laptops/Gaming
+#Desktop/Laptop
 https://www.walmart.com/browse/electronics/all-laptop-computers/3944_3951_1089430_132960
 https://www.walmart.com/browse/computers/desktop-computers/3944_3951_132982
 https://www.walmart.com/browse/electronics/pc-gaming/gaming-desktops/3944_3951_132982_1231068_1097445
@@ -15,6 +50,8 @@ https://www.walmart.com/browse/electronics/pc-gaming/gaming-laptops/3944_3951_10
 https://www.walmart.com/browse/pc-gaming/pc-games/2636_1077504_1225011
 https://www.walmart.com/browse/pc-gaming/pc-gaming-peripherals-accessories/3944_3951_7052607_9433123
 https://www.walmart.com/browse/computers/computer-monitors/3944_3951_1230331
+https://www.walmart.com/browse/computer-accessories-peripherals/3944_3951_132959
+https://www.walmart.com/browse/pc-gaming/gaming-desktops-laptops/3944_3951_7052607_1849032
 #Router
 https://www.walmart.com/browse/electronics/routers/3944_3951_126297_1073784
 https://www.walmart.com/browse/electronics/modems/3944_3951_126297_126304
@@ -37,7 +74,7 @@ https://www.walmart.com/browse/electronics/digital-slr-cameras/3944_133277_10966
 https://www.walmart.com/browse/electronics/dji-drones/3944_5525941_5960206_3976514
 https://www.walmart.com/browse/electronics/parrot-drones/3944_5525941_5960206_9915830
 https://www.walmart.com/browse/electronics/autel-robotics-drones/3944_5525941_5960206_1706415
-#Camera
+#Camera Accessories
 https://www.walmart.com/browse/cameras-camcorders/camera-accessories/3944_133277_132913
 #Headphones
 https://www.walmart.com/browse/electronics/wireless-and-bluetooth-headphones/3944_133251_1095191_1230614_1230478
@@ -49,4 +86,10 @@ https://www.walmart.com/browse/shop-headphones-by-type/waterproof-headphones/394
 https://www.walmart.com/browse/electronics/pro-dj-headphones/3944_96469_1230614_1231507
 https://www.walmart.com/browse/headphones/shop-headphones-by-brand/3944_133251_1095191_1231498
 https://www.walmart.com/browse/electronics/wireless-bluetooth-headphones/3944_133251_1095191_1230614_1230478
-#
+https://www.walmart.com/browse/cell-phones/all-phone-headsets/1105910_133161_9253164_3195015
+#Bluetooth Speakers
+https://www.walmart.com/browse/electronics/portable-wireless-bluetooth-speakers/3944_96469_615879
+#Garden
+https://www.walmart.com/browse/patio-garden/landscaping-lawn-care/5428_4091_1229594
+https://www.walmart.com/browse/patio-garden/garden-tools/5428_4091_4689569
+https://www.walmart.com/browse/patio-garden/garden-chemicals-treatments/5428_4091_1043832
