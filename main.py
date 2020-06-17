@@ -304,9 +304,21 @@ class Walmart:
         for id in self.storeID:
             test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0], id) for query in filterQueries)
 
-    def test(self, db):
-        for id in self.storeID:
-            db.createStoreTable(id)
+    def productOnSale(self,db):
+        for store_id in self.storeID:
+            for sku,price,location in db.getAvailableKnownInStoreItems(store_id):
+                try:
+                    if self.isDiscounted(price,db.getMsrpPrice(sku)[0]):
+                        print("Discount Found at store {} with sku {} with category {}".format(store_id,sku,db.getCategory(sku)))
+                except:
+                    print("Item does not exist in main database with SKU={}".format(sku))
+
+    def removeSku(self,sku,db):
+        for store_id in self.storeID:
+            try:
+                db.deleteSKU(sku,"Walmart{}".format(store_id))
+            except:
+                print("Does not exist in table")
 
 
 if __name__ == "__main__":
@@ -315,7 +327,9 @@ if __name__ == "__main__":
     test.loadWalmartId()
     print("Enter the following:\n "
           "1) Load Database\n"
-          "2) Load Local Walmarts\n")
+          "2) Load Local Walmarts\n"
+          "3) Check for Discounts\n"
+          "4) Delete SKU \n")
     response = input("Your Choice: ")
     if response == "1":
         test.initChromeDriver()
@@ -351,6 +365,12 @@ if __name__ == "__main__":
         elif response == "max":
             for filter_name in test.getFilters():
                 test.checkWalmart(database, filter_name)
+    elif response=="3":
+        test.productOnSale(database)
+    elif response=="4":
+        print("Enter SKU")
+        response = input('SKU: ')
+        test.removeSku(response,database)
     database.close()
 
 # test.checkSale(database)

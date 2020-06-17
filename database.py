@@ -73,5 +73,39 @@ class sql:
         cursor.close()
         self.mydb.commit()
 
+    def getAvailableKnownInStoreItems(self,store_id):
+        cursor = self.mydb.cursor()
+        query = "SELECT sku,Price,location FROM Walmart{} WHERE availability=1 and price!=-1".format(store_id)
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
+    def getMsrpPrice(self,sku):
+        cursor = self.mydb.cursor()
+        query = "SELECT Price FROM SKU WHERE sku='{}'".format(sku)
+        cursor.execute(query)
+        result = cursor.fetchone()
+        cursor.close()
+        return result
+
+    def getCategory(self,sku):
+        cursor = self.mydb.cursor()
+        query = "SELECT Filter FROM SKU WHERE sku='{}'".format(sku)
+        cursor.execute(query)
+        result = cursor.fetchone()
+        cursor.close()
+        return result
+
+    def deleteSKU(self,sku,table_name):
+        cursor = self.mydb.cursor()
+        query = "DELETE FROM {} WHERE SKU='{}'".format(table_name,sku)
+        cursor.execute(query)
+        cursor.close()
+        self.mydb.commit()
+
     def close(self):
         self.mydb.close()
+
+test = sql()
+test.deleteSKU(1102337,'Walmart905')
