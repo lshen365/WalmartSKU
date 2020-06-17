@@ -9,19 +9,26 @@ from database import sql
 from joblib import Parallel, delayed
 import time
 from JsonScrape import jsonLocator
+
+
 class Walmart:
     def __init__(self):
-        self.filters = ['TV', 'Audio','Phone Case','Screen Protector','Cell Phone Accessories','Power Banks','Security Camera','Streaming Device','Smart Device','iPad/Tablet','Desktop/Laptop','Router','PC Parts','GPS','Camera','Drone','Camera Accessories','Headphones','Bluetooth Speakers','Garden']
+        self.storeID = []
+        self.filters = ['TV', 'Audio', 'Phone Case', 'Screen Protector', 'Cell Phone Accessories', 'Power Banks',
+                        'Security Camera', 'Streaming Device', 'Smart Device', 'iPad/Tablet', 'Desktop/Laptop',
+                        'Router', 'PC Parts', 'GPS', 'Camera', 'Drone', 'Camera Accessories', 'Headphones',
+                        'Bluetooth Speakers', 'Garden']
 
     def getFilters(self):
         return self.filters
+
     def initChromeDriver(self):
         self.chrome_options = Options()
         self.chrome_options.add_argument("--headless")
         prefs = {"profile.managed_default_content_settings.images": 2}
         self.chrome_options.add_experimental_option("prefs", prefs)
         self.driver = webdriver.Chrome(options=self.chrome_options)
-        #self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) #This is for Raspberry Pi
+        # self.driver = webdriver.Chrome("/usr/bin/chromedriver",options = self.chrome_options) #This is for Raspberry Pi
         print("Chrome Driver Initialized")
 
     def closeChromeDriver(self):
@@ -68,7 +75,6 @@ class Walmart:
                 "//li[contains(@data-tl-id,'ProductTileGridView')]")
             data = []
             if elements != NoSuchElementException:
-                count = 0
                 for elem in elements:
                     try:
                         url = str(elem.find_element_by_css_selector("a[data-type='itemTitles']").get_attribute("href"))
@@ -77,13 +83,14 @@ class Walmart:
                         price = self.filterPrice(elem.find_element_by_css_selector(
                             "span[class='search-result-productprice gridview enable-2price-2']").text)
 
-                        if price != None and not db.exist(sku,'SKU') and len(sku) < 16:
+                        if price != None and not db.exist(sku, 'SKU') and len(sku) < 16:
                             data.append((sku, price, desc))
-                        elif db.exist(sku,'SKU'):
+                        elif db.exist(sku, 'SKU'):
                             print("The product with sku of {} already exists".format(sku))
                     except NoSuchElementException:
                         print(
-                            "{} has problem with finding a[data-type='itemTitles'] or span[class='search-result-productprice gridview enable-2price-2']".format(
+                            "{} has problem with finding a[data-type='itemTitles'] or span["
+                            "class='search-result-productprice gridview enable-2price-2']".format(
                                 url))
                 return data
             else:
@@ -159,7 +166,7 @@ class Walmart:
 
     def isDiscounted(self, currPrice, originalPrice):
         discount = 1 - (currPrice / originalPrice)
-        if (discount > 0.5):
+        if discount > 0.5:
             return True
         return False
 
@@ -226,23 +233,16 @@ class Walmart:
         self.driver.close()
 
     def loadWalmartId(self):
-        self.storeID = []
         with open('WalmartID.txt') as read:
             for line in read:
                 if line[0] != '#':
                     self.storeID.append(line.rstrip('\n'))
 
-    def getProductPageSource(self,url):
-        self.chrome_options = Options()
-        self.chrome_options.add_argument("--headless")
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        self.chrome_options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(options=self.chrome_options)
+    def getProductPageSource(self, url):
         self.driver.get(url)
         page_source = self.driver.page_source
         self.driver.quit()
         return page_source
-
 
     def searchWalmart(self, url):
         """
@@ -252,8 +252,8 @@ class Walmart:
         :return: Product Name, Price, and Location
         :rtype: String, String, String
         """
-        #OOS 476550098
-        #Not available 791149058
+        # OOS 476550098
+        # Not available 791149058
         walmart_json = jsonLocator(url)
         if walmart_json.doesExist():
             item_name = walmart_json.getTitle()
@@ -261,40 +261,39 @@ class Walmart:
             if walmart_json.getAvailability() == 1:
                 item_price = walmart_json.getPrice()
             item_location = walmart_json.getStoreInventory()
-            if walmart_json.getIsleLocation() != None:
-                item_location+="| "+walmart_json.getIsleLocation()
+            if walmart_json.getIsleLocation() is not None:
+                item_location += "| " + walmart_json.getIsleLocation()
             print("found")
-            return item_name,item_price,item_location
+            return item_name, item_price, item_location
 
-        return None,None,None
-
+        return None, None, None
 
     def addToLink(self, count, sku, id, link):
         if count != 0 and count % 2 == 0:
-            return "https://www.walmart.com/store/{}/search?query={}".format(id,sku)
+            return "https://www.walmart.com/store/{}/search?query={}".format(id, sku)
         elif count == 0:
             return link + sku
         else:
             return link + "%20" + sku
 
-    def runParallel(self,sku,id):
+    def runParallel(self, sku, id):
         try:
             db = sql()
 
-            link = "https://www.walmart.com/store/electrode/api/search?query={}&stores={}".format(sku,id)
+            link = "https://www.walmart.com/store/electrode/api/search?query={}&stores={}".format(sku, id)
             print(link)
-            if db.exist(sku,"Walmart{}".format(id)):
-                print("{} already exists in the database with store id {}".format(sku,id))
+            if db.exist(sku, "Walmart{}".format(id)):
+                print("{} already exists in the database with store id {}".format(sku, id))
             else:
                 print(link)
-                item_name,item_price,item_location = self.searchWalmart(link)
-                if item_name != None:
-                    if item_price == None:
-                        db.insertStoreEntry(id,sku,-1,True,item_location)
+                item_name, item_price, item_location = self.searchWalmart(link)
+                if item_name is not None:
+                    if item_price is None:
+                        db.insertStoreEntry(id, sku, -1, True, item_location)
                     else:
-                        db.insertStoreEntry(id,sku,int(float(item_price)),True,item_location)
+                        db.insertStoreEntry(id, sku, int(float(item_price)), True, item_location)
                 else:
-                    db.insertStoreEntry(id,sku,-1,False,"None")
+                    db.insertStoreEntry(id, sku, -1, False, "None")
             db.close()
         except:
             print("Error with Connection to database")
@@ -303,10 +302,9 @@ class Walmart:
         filterQueries = db.filterByCategory(category)
         # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
         for id in self.storeID:
-            count = 0
-            test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0],id) for query in filterQueries)
+            test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0], id) for query in filterQueries)
 
-    def test(self,db):
+    def test(self, db):
         for id in self.storeID:
             db.createStoreTable(id)
 
@@ -323,7 +321,7 @@ if __name__ == "__main__":
         test.initChromeDriver()
         test.loadDatabase(database)
         test.closeChromeDriver()
-    elif response=="2":
+    elif response == "2":
         print("How many filters do you want to run?\n"
               "Choose the following:\n"
               "1,2,3,max")
@@ -332,30 +330,28 @@ if __name__ == "__main__":
         if response == "1":
             print("Enter the filter name")
             filter1 = input()
-            test.checkWalmart(database,filter1)
+            test.checkWalmart(database, filter1)
         elif response == "2":
             print("Enter the filter name")
             filter1 = input()
             print("Enter the filter name")
             filter2 = input()
-            test.checkWalmart(database,filter1)
-            test.checkWalmart(database,filter2)
-        elif response=="3":
+            test.checkWalmart(database, filter1)
+            test.checkWalmart(database, filter2)
+        elif response == "3":
             print("Enter the filter name")
             filter1 = input()
             print("Enter the filter name")
             filter2 = input()
             print("Enter the filter name")
             filter3 = input()
-            test.checkWalmart(database,filter1)
-            test.checkWalmart(database,filter2)
-            test.checkWalmart(database,filter3)
-        elif response=="max":
-            for filter in test.getFilters():
-                test.checkWalmart(database,filter)
+            test.checkWalmart(database, filter1)
+            test.checkWalmart(database, filter2)
+            test.checkWalmart(database, filter3)
+        elif response == "max":
+            for filter_name in test.getFilters():
+                test.checkWalmart(database, filter_name)
     database.close()
-
-
 
 # test.checkSale(database)
 # test.checkWalmart(database,"TV")
