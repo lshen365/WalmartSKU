@@ -104,8 +104,14 @@ class sql:
         cursor.close()
         self.mydb.commit()
 
+    def updateValue(self,table,sku,price,availability,location):
+        cursor = self.mydb.cursor()
+        query = "UPDATE {} SET Price={},availability={},location='{}' WHERE sku='{}'".format(table,price,availability,location,sku)
+        cursor.execute(query)
+        cursor.close()
+        print("Updated Prices/Location/Availability for SKU={}".format(sku))
+        self.mydb.commit()
     def close(self):
         self.mydb.close()
 
 test = sql()
-test.deleteSKU(1102337,'Walmart905')

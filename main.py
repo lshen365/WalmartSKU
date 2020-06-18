@@ -263,7 +263,6 @@ class Walmart:
             item_location = walmart_json.getStoreInventory()
             if walmart_json.getIsleLocation() is not None:
                 item_location += "| " + walmart_json.getIsleLocation()
-            print("found")
             return item_name, item_price, item_location
 
         return None, None, None
@@ -320,6 +319,30 @@ class Walmart:
             except:
                 print("Does not exist in table")
 
+    def updateTableParallel(self, sku, id):
+        try:
+            db = sql()
+            store_id = "Walmart{}".format(id)
+            link = "https://www.walmart.com/store/electrode/api/search?query={}&stores={}".format(sku, id)
+            print(link)
+            item_name, item_price, item_location = self.searchWalmart(link)
+            if item_name is not None:
+
+                if item_price is None:
+                    db.updateValue(store_id, sku, -1, True, item_location)
+                else:
+                    db.updateValue(store_id, sku, int(float(item_price)), True, item_location)
+            else:
+                db.updateValue(store_id, sku, -1, False, "None")
+            db.close()
+        except:
+            print("Error with Connection to database")
+
+    def updateTablePrices(self,db):
+        for store_id in self.storeID:
+            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableKnownInStoreItems(store_id))
+
+
 
 if __name__ == "__main__":
     database = sql()
@@ -329,7 +352,8 @@ if __name__ == "__main__":
           "1) Load Database\n"
           "2) Load Local Walmarts\n"
           "3) Check for Discounts\n"
-          "4) Delete SKU \n")
+          "4) Delete SKU \n"
+          "5) Update Table")
     response = input("Your Choice: ")
     if response == "1":
         test.initChromeDriver()
@@ -371,6 +395,9 @@ if __name__ == "__main__":
         print("Enter SKU")
         response = input('SKU: ')
         test.removeSku(response,database)
+    elif response=="5":
+        print("Updating table now...")
+        test.updateTablePrices(database)
     database.close()
 
 # test.checkSale(database)
