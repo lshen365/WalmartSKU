@@ -275,7 +275,7 @@ class Walmart:
         else:
             return link + "%20" + sku
 
-    def runParallel(self, sku, id):
+    def runParallelInsert(self, sku, id):
         try:
             db = sql()
 
@@ -301,17 +301,21 @@ class Walmart:
         filterQueries = db.filterByCategory(category)
         # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
         for id in self.storeID:
-            test = Parallel(n_jobs=6)(delayed(self.runParallel)(query[0], id) for query in filterQueries)
+            print("Current Category is: {}".format(category))
+            test = Parallel(n_jobs=20)(delayed(self.runParallelInsert)(query[0], id) for query in filterQueries)
 
     def productOnSale(self,db):
         for store_id in self.storeID:
             for sku,price,location in db.getAvailableKnownInStoreItems(store_id):
+                link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id,sku)
                 try:
                     if self.isDiscounted(price,db.getMsrpPrice(sku)[0]):
-                        print("Discount Found at store {} with sku {} with category {}".format(store_id,sku,db.getCategory(sku)))
+                        line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
+                        deals_file = open('deals.txt','a+')
+                        deals_file.write(line)
+                        deals_file.close()
                 except:
                     print("Item does not exist in main database with SKU={}".format(sku))
-
     def removeSku(self,sku,db):
         for store_id in self.storeID:
             try:

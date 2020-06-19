@@ -37,7 +37,7 @@ class jsonLocator():
 
     def getPrice(self):
         try:
-            return self.json_data['items'][0]['prices']['current']['amount']
+            return self.json_data['items'][0]['storeFrontBuyingOptions']['primaryOfferPrice']['amount']
         except:
             return None
 
