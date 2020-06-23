@@ -111,7 +111,7 @@ class sql:
         cursor.close()
         print("Updated Prices/Location/Availability for SKU={}".format(sku))
         self.mydb.commit()
+
     def close(self):
         self.mydb.close()
 
-test = sql()

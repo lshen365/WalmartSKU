@@ -309,13 +309,15 @@ class Walmart:
             for sku,price,location in db.getAvailableKnownInStoreItems(store_id):
                 link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id,sku)
                 try:
-                    if self.isDiscounted(price,db.getMsrpPrice(sku)[0]):
+                    result = self.isDiscounted(price,db.getMsrpPrice(sku)[0])
+                    if result <= 1:
                         line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
                         deals_file = open('deals.txt','a+')
                         deals_file.write(line)
                         deals_file.close()
                 except:
                     print("Item does not exist in main database with SKU={}".format(sku))
+
     def removeSku(self,sku,db):
         for store_id in self.storeID:
             try:
@@ -403,7 +405,6 @@ if __name__ == "__main__":
         print("Updating table now...")
         test.updateTablePrices(database)
     database.close()
-
 # test.checkSale(database)
 # test.checkWalmart(database,"TV")
 # database.close()
