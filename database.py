@@ -22,6 +22,13 @@ class sql:
                 print(err)
 
     def add(self,data):
+        """
+        Inserts into Main Database
+        :param data: Sql command
+        :type data: String
+        :return: None
+        :rtype: None
+        """
         cursor = self.mydb.cursor()
 
         sql = "INSERT INTO SKU (SKU, Price,Filter) VALUES (%s, %s, %s)"
@@ -33,10 +40,9 @@ class sql:
 
     def exist(self,sku,table):
         """
-
+        Checks if an Item exists given the SKU and Table Name
         :param sku: SKU of Walmart's item
         :return:
-
         If Exist: Cost of item
         If Not Exist: False
         """
@@ -51,6 +57,13 @@ class sql:
             return True
 
     def filterByCategory(self,category):
+        """
+        Returns all known items based off given category
+        :param category: Filter Name
+        :type category: String
+        :return: All rows given the category
+        :rtype: Tuple (Sku,Price)
+        """
         cursor = self.mydb.cursor()
         query = "SELECT SKU,Price FROM SKU WHERE Filter='{}'".format(category)
         cursor.execute(query)
@@ -59,6 +72,13 @@ class sql:
         return result
 
     def createStoreTable(self,id):
+        """
+        Creates a new table given  ID
+        :param id: Store ID
+        :type id: String
+        :return: None
+        :rtype: None
+        """
         cursor = self.mydb.cursor()
         query = "CREATE TABLE Walmart{} (sku VARCHAR(16),price int(11),availability BOOLEAN,location VARCHAR(60))".format(id)
         print("Successfully created a database")
@@ -66,6 +86,21 @@ class sql:
         cursor.close()
 
     def insertStoreEntry(self,store_id,sku,price,exist,location):
+        """
+        Inserts into store the item, price, availability, and location
+        :param store_id: Store Location
+        :type store_id: String
+        :param sku: Sku Number
+        :type sku: String
+        :param price: Price of Item
+        :type price: Float
+        :param exist: Availability of Item
+        :type exist: Boolean
+        :param location: Where Item is stored
+        :type location: String
+        :return: None
+        :rtype: None
+        """
         cursor = self.mydb.cursor()
         query = "INSERT INTO Walmart{} (sku, Price, availability, location) VALUES ('{}',{},{},'{}')".format(store_id,sku,price,exist,location)
         print("Successfully inserted Walmart{} with SKU={} entry".format(store_id,sku))
@@ -74,6 +109,13 @@ class sql:
         self.mydb.commit()
 
     def getAvailableKnownInStoreItems(self,store_id):
+        """
+        Returns all available items at the store
+        :param store_id: Store Number
+        :type store_id: Int
+        :return: Returns all Available items
+        :rtype: Tuples (Sku,Price,Location)
+        """
         cursor = self.mydb.cursor()
         query = "SELECT sku,Price,location FROM Walmart{} WHERE availability=1 and price!=-1".format(store_id)
         cursor.execute(query)
@@ -82,6 +124,13 @@ class sql:
         return result
 
     def getMsrpPrice(self,sku):
+        """
+        Grabs the original price from Walmart.com
+        :param sku: Item Sku
+        :type sku: String
+        :return: Price of the item
+        :rtype: Float
+        """
         cursor = self.mydb.cursor()
         query = "SELECT Price FROM SKU WHERE sku='{}'".format(sku)
         cursor.execute(query)
@@ -90,6 +139,13 @@ class sql:
         return result
 
     def getCategory(self,sku):
+        """
+        Gets the Category based off sku
+        :param sku: Item Sku
+        :type sku: String
+        :return: Filter Name
+        :rtype: String
+        """
         cursor = self.mydb.cursor()
         query = "SELECT Filter FROM SKU WHERE sku='{}'".format(sku)
         cursor.execute(query)
@@ -98,6 +154,15 @@ class sql:
         return result
 
     def deleteSKU(self,sku,table_name):
+        """
+        Deletes SKU inside the table
+        :param sku: Item Sku
+        :type sku: String
+        :param table_name: Name of the Table
+        :type table_name: String
+        :return: None
+        :rtype: None
+        """
         cursor = self.mydb.cursor()
         query = "DELETE FROM {} WHERE SKU='{}'".format(table_name,sku)
         cursor.execute(query)
@@ -105,6 +170,21 @@ class sql:
         self.mydb.commit()
 
     def updateValue(self,table,sku,price,availability,location):
+        """
+        Changes the SKU,Price,Availability,Location of the given table
+        :param table: Table Name
+        :type table: String
+        :param sku: Item Sku
+        :type sku: String
+        :param price: Price of Item
+        :type price: Float
+        :param availability: Availability of Item
+        :type availability: Boolean (1 = Exists 0 = Not Exist)
+        :param location: Where Item is located at store
+        :type location: String
+        :return:
+        :rtype:
+        """
         cursor = self.mydb.cursor()
         query = "UPDATE {} SET Price={},availability={},location='{}' WHERE sku='{}'".format(table,price,availability,location,sku)
         cursor.execute(query)
