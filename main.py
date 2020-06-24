@@ -128,7 +128,7 @@ class Walmart:
                 newurl = link + html_tag
                 print(newurl)
                 time0 = time.time()
-                data = test.scrapeProduct(newurl, database, description)
+                data = self.scrapeProduct(newurl, database, description)
                 database.add(data)
                 time1 = time.time()
                 print(time1 - time0)
@@ -349,62 +349,102 @@ class Walmart:
             Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableKnownInStoreItems(store_id))
 
 
+def validChoice(choice):
+    regex = "^[1-5]$"
+    valid_choice = re.search(regex, choice)
+    if valid_choice:
+        return True
+    return False
+
+def validLoadLocalWalmartsFilterResponse(walmart, response):
+    if response == "max" or response == "Max":
+        return True
+    length = len(walmart.getFilters())
+    if response.isdigit() and int(response) >= 1 and int(response) <= length:
+        return True
+    return False
 
 if __name__ == "__main__":
     database = sql()
-    test = Walmart()
-    test.loadWalmartId()
-    print("Enter the following:\n "
+    walmart = Walmart()
+    walmart.loadWalmartId()
+    print("Enter the following:\n"
           "1) Load Database\n"
           "2) Load Local Walmarts\n"
           "3) Check for Discounts\n"
-          "4) Delete SKU \n"
+          "4) Delete SKU\n"
           "5) Update Table")
-    response = input("Your Choice: ")
-    if response == "1":
-        test.initChromeDriver()
-        test.loadDatabase(database)
-        test.closeChromeDriver()
-    elif response == "2":
+
+    choice = input("Your Choice: ")
+    #checks if user input valid choice
+    while not validChoice(choice):
+        choice = input("Please enter a valid choice. Your Choice: ")
+
+    #load database
+    if choice == "1":
+        walmart.initChromeDriver()
+        walmart.loadDatabase(database)
+        walmart.closeChromeDriver()
+    #load local Walmarts
+    elif choice == "2":
         print("How many filters do you want to run?\n"
-              "Choose the following:\n"
-              "1,2,3,max")
+              "Type 1 up to max (or 20):")
         response = input()
-        print(test.getFilters())
-        if response == "1":
-            print("Enter the filter name")
-            filter1 = input()
-            test.checkWalmart(database, filter1)
-        elif response == "2":
-            print("Enter the filter name")
-            filter1 = input()
-            print("Enter the filter name")
-            filter2 = input()
-            test.checkWalmart(database, filter1)
-            test.checkWalmart(database, filter2)
-        elif response == "3":
-            print("Enter the filter name")
-            filter1 = input()
-            print("Enter the filter name")
-            filter2 = input()
-            print("Enter the filter name")
-            filter3 = input()
-            test.checkWalmart(database, filter1)
-            test.checkWalmart(database, filter2)
-            test.checkWalmart(database, filter3)
-        elif response == "max":
-            for filter_name in test.getFilters():
-                test.checkWalmart(database, filter_name)
-    elif response=="3":
-        test.productOnSale(database)
-    elif response=="4":
+        while not validLoadLocalWalmartsFilterResponse(walmart, response):
+            response = input("Please enter a valid response. Type 1 up to max (or 20):")
+
+        #changes max to length of filters
+        if len(re.findall("max", response, re.IGNORECASE)) != 0:
+            response = len(walmart.getFilters())
+
+        print(walmart.getFilters())
+
+        #TODO: check for valid filters
+        filters = []
+        for i in range(int(response)):
+            filters.append(input("Enter a filter name:"))
+
+        for filter in filters:
+            walmart.checkWalmart(database, filter)
+        # if response == "1":
+        #     print("Enter the filter name")
+        #     filter1 = input()
+        #     walmart.checkWalmart(database, filter1)
+        # elif response == "2":
+        #     print("Enter the filter name")
+        #     filter1 = input()
+        #     print("Enter the filter name")
+        #     filter2 = input()
+        #     walmart.checkWalmart(database, filter1)
+        #     walmart.checkWalmart(database, filter2)
+        # elif response == "3":
+        #     print("Enter the filter name")
+        #     filter1 = input()
+        #     print("Enter the filter name")
+        #     filter2 = input()
+        #     print("Enter the filter name")
+        #     filter3 = input()
+        #     walmart.checkWalmart(database, filter1)
+        #     walmart.checkWalmart(database, filter2)
+        #     walmart.checkWalmart(database, filter3)
+        # elif response == "max":
+        #     for filter_name in walmart.getFilters():
+        #         walmart.checkWalmart(database, filter_name)
+    #check for discounts
+    elif choice == "3":
+        walmart.productOnSale(database)
+    #delete SKUs
+    elif choice == "4":
         print("Enter SKU")
         response = input('SKU: ')
-        test.removeSku(response,database)
-    elif response=="5":
-        print("Updating table now...")
-        test.updateTablePrices(database)
+        walmart.removeSku(response, database)
+    #update table
+    elif choice == "5":
+        print("Updating table...")
+        walmart.updateTablePrices(database)
+
     database.close()
+
 # test.checkSale(database)
 # test.checkWalmart(database,"TV")
 # database.close()
