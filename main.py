@@ -270,7 +270,7 @@ class Walmart:
 
 
     def addToLink(self, count, sku, id, link):
-        if count != 0 and count % 2 == 0:
+        if count != 3 and count % 2 == 0:
             return f"https://www.walmart.com/store/{id}/search?query={sku}"
         elif count == 0:
             return link + sku
