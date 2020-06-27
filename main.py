@@ -87,9 +87,9 @@ class Walmart:
                         price = self.filterPrice(elem.find_element_by_css_selector(
                             "span[class='search-result-productprice gridview enable-2price-2']").text)
 
-                        if price != None and not db.exist(sku, 'SKU') and len(sku) < 16:
+                        if price != None and not db.exist(sku, 'Walmart') and len(sku) < 16:
                             data.append((sku, price, desc))
-                        elif db.exist(sku, 'SKU'):
+                        elif db.exist(sku, 'Walmart'):
                             print("The product with sku of {} already exists".format(sku))
                     except NoSuchElementException:
                         print(

@@ -31,7 +31,7 @@ class sql:
         """
         cursor = self.mydb.cursor()
 
-        sql = "INSERT INTO SKU (SKU, Price,Filter) VALUES (%s, %s, %s)"
+        sql = "INSERT INTO Walmart (SKU, Price,Filter) VALUES (%s, %s, %s)"
         cursor.executemany(sql, data)
 
         self.mydb.commit()
@@ -65,7 +65,7 @@ class sql:
         :rtype: Tuple (Sku,Price)
         """
         cursor = self.mydb.cursor()
-        query = "SELECT SKU,Price FROM SKU WHERE Filter='{}'".format(category)
+        query = "SELECT Walmart,Price FROM SKU WHERE Filter='{}'".format(category)
         cursor.execute(query)
         result = cursor.fetchall()
         cursor.close()
@@ -132,7 +132,7 @@ class sql:
         :rtype: Float
         """
         cursor = self.mydb.cursor()
-        query = "SELECT Price FROM SKU WHERE sku='{}'".format(sku)
+        query = "SELECT Price FROM Walmart WHERE sku='{}'".format(sku)
         cursor.execute(query)
         result = cursor.fetchone()
         cursor.close()
