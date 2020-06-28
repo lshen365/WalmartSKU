@@ -38,6 +38,21 @@ class sql:
 
         print(cursor.rowcount, "record inserted")
 
+    def insertIntoTable(self,value,column,table,sku):
+        cursor = self.mydb.cursor()
+        sql = "UPDATE {} SET {}='{}' WHERE sku='{}'".format(table,column,value,sku)
+        cursor.execute(sql)
+        self.mydb.commit()
+        print("Added {} to {}".format(value,table))
+
+    def getSKU(self):
+        cursor = self.mydb.cursor()
+        sql = "SELECT SKU FROM Walmart"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def exist(self,sku,table):
         """
         Checks if an Item exists given the SKU and Table Name
@@ -65,7 +80,7 @@ class sql:
         :rtype: Tuple (Sku,Price)
         """
         cursor = self.mydb.cursor()
-        query = "SELECT Walmart,Price FROM SKU WHERE Filter='{}'".format(category)
+        query = "SELECT sku,Price FROM Walmart WHERE Filter='{}'".format(category)
         cursor.execute(query)
         result = cursor.fetchall()
         cursor.close()
@@ -147,7 +162,7 @@ class sql:
         :rtype: String
         """
         cursor = self.mydb.cursor()
-        query = "SELECT Filter FROM SKU WHERE sku='{}'".format(sku)
+        query = "SELECT Filter FROM Walmart WHERE sku='{}'".format(sku)
         cursor.execute(query)
         result = cursor.fetchone()
         cursor.close()
@@ -194,4 +209,3 @@ class sql:
 
     def close(self):
         self.mydb.close()
-

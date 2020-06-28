@@ -39,6 +39,18 @@ class Walmart:
         self.driver.quit()
         print("Chrome Driver Quit")
 
+    def loadUPCAndTitle(self):
+        db = sql()
+        for sku in db.getSKU():
+            link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku[0])
+            walmart_json = jsonLocator(link)
+            if walmart_json.doesExist():
+                db.insertIntoTable(walmart_json.getUPC(),'UPC','Walmart',sku[0])
+                db.insertIntoTable(walmart_json.getTitle(),'Name','Walmart',sku[0])
+            else:
+                print(sku[0]," does not exist")
+        db.close()
+
     def filterPrice(self, text):
         """
         Helper function to filter out the price and random unecessary text.
@@ -188,7 +200,7 @@ class Walmart:
         :rtype: Boolean
         """
         discount = 1 - (currPrice / originalPrice)
-        if discount > 0.5:
+        if discount > 0.5 and discount <=1:
             return True
         return False
 
@@ -364,7 +376,8 @@ class Walmart:
                 link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id,sku)
                 try:
                     result = self.isDiscounted(price,db.getMsrpPrice(sku)[0])
-                    if result <= 1:
+
+                    if result:
                         line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
                         deals_file = open('deals.txt','a+')
                         deals_file.write(line)
@@ -462,9 +475,15 @@ if __name__ == "__main__":
 
     #load database
     if choice == "1":
-        walmart.initChromeDriver()
-        walmart.loadDatabase(database)
-        walmart.closeChromeDriver()
+        print("1) Load Main Database\n"
+                         "2) Load UPC/Title")
+        response = input("Your Choice: ")
+        if response == "1":
+            walmart.initChromeDriver()
+            walmart.loadDatabase(database)
+            walmart.closeChromeDriver()
+        elif response == "2":
+            walmart.loadUPCAndTitle()
     #load local Walmarts
     elif choice == "2":
         print("How many filters do you want to run?\n"

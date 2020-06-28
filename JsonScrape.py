@@ -41,6 +41,12 @@ class jsonLocator():
         except:
             return None
 
+    def getUPC(self):
+        return self.json_data['items'][0]['properties']['standard_upc']
+
+
+
+
 #test = jsonLocator("https://www.walmart.com/store/electrode/api/search?query=781345173&stores=1231")
 # test = jsonLocator("https://www.walmart.com/store/electrode/api/search?query=401199665&stores=869")
-# print(test.getPrice())
+# print(test.getTitle())
