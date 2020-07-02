@@ -9,7 +9,7 @@ from database import sql
 from joblib import Parallel, delayed
 import time
 from JsonScrape import jsonLocator
-
+import os
 class Walmart:
     def __init__(self):
         self.storeID = []
@@ -371,12 +371,15 @@ class Walmart:
         :return: None
         :rtype: None
         """
+        if os.path.exists('deals.txt'):
+            os.remove('deals.txt')
+
         for store_id in self.storeID:
             for sku,price,location in db.getAvailableKnownInStoreItems(store_id):
                 link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id,sku)
+                time0 = time.time()
                 try:
                     result = self.isDiscounted(price,db.getMsrpPrice(sku)[0])
-
                     if result:
                         line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
                         deals_file = open('deals.txt','a+')
@@ -384,7 +387,8 @@ class Walmart:
                         deals_file.close()
                 except:
                     print("Item does not exist in main database with SKU={}".format(sku))
-
+                time1=time.time()
+                print(time1-time0)
     def removeSku(self,sku,db):
         """
         Deletes Sku from all Local Walmarts
