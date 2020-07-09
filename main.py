@@ -41,14 +41,17 @@ class Walmart:
 
     def loadUPCAndTitle(self):
         db = sql()
-        for sku in db.getSKU():
+        for sku in db.emptyTitles():
             link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku[0])
             walmart_json = jsonLocator(link)
-            if walmart_json.doesExist():
-                db.insertIntoTable(walmart_json.getUPC(),'UPC','Walmart',sku[0])
-                db.insertIntoTable(walmart_json.getTitle(),'Name','Walmart',sku[0])
-            else:
-                print(sku[0]," does not exist")
+            try:
+                if walmart_json.doesExist():
+                    db.insertIntoTable(walmart_json.getUPC(),'UPC','Walmart',sku[0])
+                    db.insertIntoTable(walmart_json.getTitle(),'Name','Walmart',sku[0])
+                else:
+                    print(sku[0]," does not exist")
+            except:
+                print("Error inserting Title into Database")
         db.close()
 
     def filterPrice(self, text):
@@ -400,6 +403,7 @@ class Walmart:
                 db.deleteSKU(sku,"Walmart{}".format(store_id))
             except:
                 print("Does not exist in table")
+        db.deleteSKU(sku,"Walmart")
 
     def updateTableParallel(self, sku, id):
         """
@@ -430,7 +434,7 @@ class Walmart:
         except:
             print("Error with Connection to database")
 
-    def updateTablePrices(self,db):
+    def updateKnownTablePrices(self,db):
         """
         Runs Parallel Processes for updating table of known processes
         :param db: Database Instance
@@ -440,6 +444,17 @@ class Walmart:
         """
         for store_id in self.storeID:
             Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableKnownInStoreItems(store_id))
+
+    def updateUnknownTablePrices(self,db):
+        """
+        Runs Parallel Processes for updating table of itmes with no availability to check if they exist starjuj
+        :param db:
+        :type db:
+        :return:
+        :rtype:
+        """
+        for store_id in self.storeID:
+            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableUnknownInStoreItems(store_id))
 
 
 def validChoice(choice):
@@ -539,8 +554,16 @@ if __name__ == "__main__":
         walmart.removeSku(response, database)
     #update table
     elif choice == "5":
-        print("Updating table...")
-        walmart.updateTablePrices(database)
+        print("1) Update Known Items\n"
+              "2) Update items that do not exist")
+        response = input("Choice: ")
+
+        if response=="1":
+            print("Updating known database...")
+            walmart.updateKnownTablePrices(database)
+        elif response=="2":
+            print("Updating Items that do not exist...")
+            walmart.updateUnknownTablePrices(database)
 
     database.close()
 

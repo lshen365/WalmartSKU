@@ -17,7 +17,12 @@ class jsonLocator():
             return False
 
     def getTitle(self):
-        return self.json_data['items'][0]['title']
+        title = self.json_data['items'][0]['title']
+        title = title.replace('/','')
+        if len(title) > 150:
+            return title[0:150]
+        else:
+            return title
 
     def getAvailability(self):
         if self.json_data['items'][0]['storeFrontBuyingOptions']['available'] == False:
@@ -47,6 +52,6 @@ class jsonLocator():
 
 
 
-#test = jsonLocator("https://www.walmart.com/store/electrode/api/search?query=781345173&stores=1231")
+#test = jsonLocator("https://www.walmart.com/store/electrode/api/search?query=614634449")
 # test = jsonLocator("https://www.walmart.com/store/electrode/api/search?query=401199665&stores=869")
-# print(test.getTitle())
+#print(len(test.getTitle()))

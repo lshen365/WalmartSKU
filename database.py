@@ -138,6 +138,21 @@ class sql:
         cursor.close()
         return result
 
+    def getAvailableUnknownInStoreItems(self,store_id):
+        """
+        Returns all available items at the store
+        :param store_id: Store Number
+        :type store_id: Int
+        :return: Returns all Available items
+        :rtype: Tuples (Sku,Price,Location)
+        """
+        cursor = self.mydb.cursor()
+        query = "SELECT sku,Price,location FROM Walmart{} WHERE availability=0".format(store_id)
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def getMsrpPrice(self,sku):
         """
         Grabs the original price from Walmart.com
@@ -207,5 +222,21 @@ class sql:
         print("Updated Prices/Location/Availability for SKU={}".format(sku))
         self.mydb.commit()
 
+    def emptyTitles(self):
+        """
+        Returns a tuple of empty SKU's that do not have any titles or UPC
+        :return:
+        :rtype:
+        """
+        cursor = self.mydb.cursor()
+        query = "SELECT SKU FROM Walmart WHERE Name=''"
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        print("{} results found that do not have a name or UPC".format(len(result)))
+        return result
+
     def close(self):
         self.mydb.close()
+# test =  sql()
+# test.emptyTitles()
