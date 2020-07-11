@@ -183,6 +183,14 @@ class sql:
         cursor.close()
         return result
 
+    def getTitle(self,sku):
+        cursor = self.mydb.cursor()
+        query = "SELECT Name FROM Walmart WHERE sku='{}'".format(sku)
+        cursor.execute(query)
+        result = cursor.fetchone()
+        cursor.close()
+        return result
+
     def deleteSKU(self,sku,table_name):
         """
         Deletes SKU inside the table

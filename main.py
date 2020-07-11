@@ -384,7 +384,8 @@ class Walmart:
                 try:
                     result = self.isDiscounted(price,db.getMsrpPrice(sku)[0])
                     if result:
-                        line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
+                        line = "{} on sale at Store {} Link: {}\n".format(db.getTitle(sku),store_id,link)
+                        #line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
                         deals_file = open('deals.txt','a+')
                         deals_file.write(line)
                         deals_file.close()
@@ -392,9 +393,25 @@ class Walmart:
                     print("Item does not exist in main database with SKU={}".format(sku))
                 time1=time.time()
                 print(time1-time0)
-    def removeSku(self,sku,db):
+    def locateBrokenSku(self):
         """
-        Deletes Sku from all Local Walmarts
+        Returns an array of SKU's that do not exist
+        :return: Array of SKU's
+        :rtype: Strings
+        """
+        db = sql()
+        broken_sku = []
+        for sku in db.getSKU():
+            link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku[0])
+            json = jsonLocator(link)
+            if not json.doesExist():
+                broken_sku.append(sku[0])
+        db.close()
+        return broken_sku
+
+    def removeSkuBasedOffSKU(self,sku,db):
+        """
+        Deletes Sku from all Local Walmarts based off given SKu
         :param sku: Sku of the item
         :type sku: String
         :param db: Database Instance
@@ -408,6 +425,24 @@ class Walmart:
             except:
                 print("Does not exist in table")
         db.deleteSKU(sku,"Walmart")
+
+    def removeAllBrokenSKU(self,db):
+        """
+        Deletes ALL Broken SKU's from the database
+        :param db: Database Instance
+        :type db: Sql()
+        :return: None
+        :rtype: None
+        """
+        broken_sku = self.locateBrokenSku()
+        for sku in broken_sku:
+            for store_id in self.storeID:
+                try:
+                    db.deleteSKU(sku,"Walmart{}".format(store_id))
+                    print("Deleted {} from Store: {}".format(sku,store_id))
+                except:
+                    print("Does not exist in table")
+            db.deleteSKU(sku,"Walmart")
 
     def updateTableParallel(self, sku, id):
         """
@@ -553,9 +588,14 @@ if __name__ == "__main__":
         walmart.productOnSale(database)
     #delete SKUs
     elif choice == "4":
-        print("Enter SKU")
-        response = input('SKU: ')
-        walmart.removeSku(response, database)
+        print("1) Remove SKU by ID\n"
+              "2) Check and Remove all broken SKU's")
+        response = input('Choice: ')
+        if response == "1":
+            response=input("Enter SKU Number: ")
+            walmart.removeSkuBasedOffSKU(response, database)
+        elif response == "2":
+            walmart.removeAllBrokenSKU(database)
     #update table
     elif choice == "5":
         print("1) Update Known Items\n"
