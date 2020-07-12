@@ -10,6 +10,8 @@ from joblib import Parallel, delayed
 import time
 from JsonScrape import jsonLocator
 import os
+import multiprocessing
+
 class Walmart:
     def __init__(self):
         self.storeID = []
@@ -17,7 +19,8 @@ class Walmart:
                         'Security Camera', 'Streaming Device', 'Smart Device', 'iPad/Tablet', 'Desktop/Laptop',
                         'Router', 'PC Parts', 'GPS', 'Camera', 'Drone', 'Camera Accessories', 'Headphones',
                         'Bluetooth Speakers', 'Garden']
-        self.broken_sku = []
+        manager = multiprocessing.Manager()
+        self.broken_sku = manager.list() #Array for multiprocessing / multithreads
 
     def getFilters(self):
         return self.filters
@@ -47,10 +50,10 @@ class Walmart:
             walmart_json = jsonLocator(link)
             try:
                 if walmart_json.doesExist():
-                    db.insertIntoTable(walmart_json.getUPC(),'UPC','Walmart',sku[0])
-                    db.insertIntoTable(walmart_json.getTitle(),'Name','Walmart',sku[0])
+                    db.insertIntoTable(walmart_json.getUPC(), 'UPC', 'Walmart', sku[0])
+                    db.insertIntoTable(walmart_json.getTitle(), 'Name', 'Walmart', sku[0])
                 else:
-                    print(sku[0]," does not exist")
+                    print(sku[0], " does not exist")
             except:
                 print("Error inserting Title into Database")
         db.close()
@@ -204,7 +207,7 @@ class Walmart:
         :rtype: Boolean
         """
         discount = 1 - (currPrice / originalPrice)
-        if discount > 0.5 and discount <=1:
+        if discount > 0.5 and discount <= 1:
             return True
         return False
 
@@ -337,12 +340,12 @@ class Walmart:
             else:
                 print(link)
                 item_name, item_price, item_location = self.searchWalmart(link)
-                #If Item Exists
+                # If Item Exists
                 if item_name is not None:
-                    #If Price is not found
+                    # If Price is not found
                     if item_price is None:
                         db.insertStoreEntry(id, sku, -1, True, item_location)
-                    #If Price is found
+                    # If Price is found
                     else:
                         db.insertStoreEntry(id, sku, int(float(item_price)), True, item_location)
                 else:
@@ -367,7 +370,7 @@ class Walmart:
             print("Current Category is: {}".format(category))
             test = Parallel(n_jobs=20)(delayed(self.runParallelInsert)(query[0], id) for query in filterQueries)
 
-    def productOnSale(self,db):
+    def productOnSale(self, db):
         """
         Writes to file called deals.txt a list of all the deals that are over 50% off
         :param db: Database Instance
@@ -379,23 +382,23 @@ class Walmart:
             os.remove('deals.txt')
 
         for store_id in self.storeID:
-            for sku,price,location in db.getAvailableKnownInStoreItems(store_id):
-                link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id,sku)
+            for sku, price, location in db.getAvailableKnownInStoreItems(store_id):
+                link = 'https://www.walmart.com/store/{}/search?query={}'.format(store_id, sku)
                 time0 = time.time()
                 try:
-                    result = self.isDiscounted(price,db.getMsrpPrice(sku)[0])
+                    result = self.isDiscounted(price, db.getMsrpPrice(sku)[0])
                     if result:
-                        line = "{} on sale at Store {} Link: {}\n".format(db.getTitle(sku),store_id,link)
-                        #line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
-                        deals_file = open('deals.txt','a+')
+                        line = "{} on sale at Store {} Link: {}\n".format(db.getTitle(sku), store_id, link)
+                        # line = "Discount Found at store {} with sku {} with category {} and link at {}\n".format(store_id,sku,db.getCategory(sku),link)
+                        deals_file = open('deals.txt', 'a+')
                         deals_file.write(line)
                         deals_file.close()
                 except:
                     print("Item does not exist in main database with SKU={}".format(sku))
-                time1=time.time()
-                print(time1-time0)
+                time1 = time.time()
+                print(time1 - time0)
 
-    def locateBrokenSku(self,sku):
+    def locateBrokenSku(self, sku):
         """
         Checks if a SKU is working or not
         :param sku: Item SKU
@@ -403,21 +406,20 @@ class Walmart:
         :return: None
         :rtype: None
         """
+
+        link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku)
         try:
-            db = sql()
-            link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku)
             json = jsonLocator(link)
             if not json.doesExist():
                 print("Found Broken SKU:{}".format(sku))
                 self.broken_sku.append(sku)
-            db.close()
         except:
-            print("Error Deleting due to Connection with Database")
+            print("Error with JSON SKU: {}".format(sku))
 
-    def removeSkuBasedOffSKU(self,sku):
+    def removeSkuBasedOffSKU(self, sku):
         """
         Deletes Sku from all Local Walmarts based off given SKu
-        :param sku: Sku of the item
+        :pa  ram sku: Sku of the item
         :type sku: String
         :return: None
         :rtype: None
@@ -425,23 +427,23 @@ class Walmart:
         db = sql()
         for store_id in self.storeID:
             try:
-                db.deleteSKU(sku,"Walmart{}".format(store_id))
-                print("Deleted Broken SKU {} at store {}".format(sku,store_id))
+                db.deleteSKU(sku, "Walmart{}".format(store_id))
+                print("Deleted Broken SKU {} at store {}".format(sku, store_id))
             except:
                 print("Does not exist in table")
-        db.deleteSKU(sku,"Walmart")
+        db.deleteSKU(sku, "Walmart")
         db.close()
 
-    def removeAllBrokenSKU(self,db):
+    def removeAllBrokenSKU(self):
         """
         Deletes ALL Broken SKU's from the database
-        :param db: Database Instance
-        :type db: Sql()
         :return: None
         :rtype: None
         """
+        db = sql()
         Parallel(n_jobs=20)(delayed(self.locateBrokenSku)(sku[0]) for sku in db.getSKU())
         Parallel(n_jobs=20)(delayed(self.removeSkuBasedOffSKU)(sku) for sku in self.broken_sku)
+        db.close()
         # for sku in self.broken_sku:
         #     for store_id in self.storeID:
         #         try:
@@ -480,7 +482,7 @@ class Walmart:
         except:
             print("Error with Connection to database")
 
-    def updateKnownTablePrices(self,db):
+    def updateKnownTablePrices(self, db):
         """
         Runs Parallel Processes for updating table of known processes
         :param db: Database Instance
@@ -489,9 +491,10 @@ class Walmart:
         :rtype: None
         """
         for store_id in self.storeID:
-            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableKnownInStoreItems(store_id))
+            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in
+                                db.getAvailableKnownInStoreItems(store_id))
 
-    def updateUnknownTablePrices(self,db):
+    def updateUnknownTablePrices(self, db):
         """
         Runs Parallel Processes for updating table of itmes with no availability to check if they exist starjuj
         :param db:
@@ -500,7 +503,8 @@ class Walmart:
         :rtype:
         """
         for store_id in self.storeID:
-            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in db.getAvailableUnknownInStoreItems(store_id))
+            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in
+                                db.getAvailableUnknownInStoreItems(store_id))
 
 
 def validChoice(choice):
@@ -510,6 +514,7 @@ def validChoice(choice):
         return True
     return False
 
+
 def validLoadLocalWalmartsFilterResponse(walmart, response):
     if response == "max" or response == "Max":
         return True
@@ -517,6 +522,7 @@ def validLoadLocalWalmartsFilterResponse(walmart, response):
     if response.isdigit() and int(response) >= 1 and int(response) <= length:
         return True
     return False
+
 
 if __name__ == "__main__":
     database = sql()
@@ -530,14 +536,14 @@ if __name__ == "__main__":
           "5) Update Table")
 
     choice = input("Your Choice: ")
-    #checks if user input valid choice
+    # checks if user input valid choice
     while not validChoice(choice):
         choice = input("Please enter a valid choice. Your Choice: ")
 
-    #load database
+    # load database
     if choice == "1":
         print("1) Load Main Database\n"
-                         "2) Load UPC/Title")
+              "2) Load UPC/Title")
         response = input("Your Choice: ")
         if response == "1":
             walmart.initChromeDriver()
@@ -545,7 +551,7 @@ if __name__ == "__main__":
             walmart.closeChromeDriver()
         elif response == "2":
             walmart.loadUPCAndTitle()
-    #load local Walmarts
+    # load local Walmarts
     elif choice == "2":
         print("How many filters do you want to run?\n"
               "Type 1 up to max (or 20):")
@@ -553,13 +559,13 @@ if __name__ == "__main__":
         while not validLoadLocalWalmartsFilterResponse(walmart, response):
             response = input("Please enter a valid response. Type 1 up to max (or 20):")
 
-        #changes max to length of filters
+        # changes max to length of filters
         if len(re.findall("max", response, re.IGNORECASE)) != 0:
             response = len(walmart.getFilters())
 
         print(walmart.getFilters())
 
-        #TODO: check for valid filters
+        # TODO: check for valid filters
         filters = []
         for i in range(int(response)):
             filters.append(input("Enter a filter name:"))
@@ -590,29 +596,29 @@ if __name__ == "__main__":
         # elif response == "max":
         #     for filter_name in walmart.getFilters():
         #         walmart.checkWalmart(database, filter_name)
-    #check for discounts
+    # check for discounts
     elif choice == "3":
         walmart.productOnSale(database)
-    #delete SKUs
+    # delete SKUs
     elif choice == "4":
         print("1) Remove SKU by ID\n"
               "2) Check and Remove all broken SKU's")
         response = input('Choice: ')
         if response == "1":
-            response=input("Enter SKU Number: ")
+            response = input("Enter SKU Number: ")
             walmart.removeSkuBasedOffSKU(response)
         elif response == "2":
-            walmart.removeAllBrokenSKU(database)
-    #update table
+            walmart.removeAllBrokenSKU()
+    # update table
     elif choice == "5":
         print("1) Update Known Items\n"
               "2) Update items that do not exist")
         response = input("Choice: ")
 
-        if response=="1":
+        if response == "1":
             print("Updating known database...")
             walmart.updateKnownTablePrices(database)
-        elif response=="2":
+        elif response == "2":
             print("Updating Items that do not exist...")
             walmart.updateUnknownTablePrices(database)
 

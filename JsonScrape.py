@@ -4,6 +4,7 @@ class jsonLocator():
     def __init__(self,url):
         self.r = requests.get(url)
         self.json_data = self.r.json()
+        self.r.close()
 
     def doesExist(self):
         if self.r.status_code != 200:
