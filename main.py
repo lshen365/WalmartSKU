@@ -354,7 +354,7 @@ class Walmart:
         except:
             print("Error with Connection to database")
 
-    def checkWalmart(self, db, category):
+    def checkWalmartByFilter(self, db, category):
         """
         Runs Parallel Processes To Insert Unknown Sku's into Local Walmarts
         :param db: Database
@@ -364,11 +364,14 @@ class Walmart:
         :return: None
         :rtype: None
         """
-        filterQueries = db.filterByCategory(category)
+        query = "SELECT SKU FROM Walmart WHERE Name is NULL AND Filter='{}'".format(category)
+        filterQueries = db.executeQueryWithReturn(query)
+        print("Found {} results from category {}".format(len(filterQueries),category))
         # self.searchWalmart("https://www.walmart.com/store/1045/lafayette-co/search?query=791149058")
         for id in self.storeID:
             print("Current Category is: {}".format(category))
-            test = Parallel(n_jobs=20)(delayed(self.runParallelInsert)(query[0], id) for query in filterQueries)
+            Parallel(n_jobs=30)(delayed(self.runParallelInsert)(query[0], id) for query in filterQueries)
+
 
     def productOnSale(self, db):
         """
@@ -491,7 +494,7 @@ class Walmart:
         :rtype: None
         """
         for store_id in self.storeID:
-            Parallel(n_jobs=20)(delayed(self.updateTableParallel)(query[0], store_id) for query in
+            Parallel(n_jobs=40)(delayed(self.updateTableParallel)(query[0], store_id) for query in
                                 db.getAvailableKnownInStoreItems(store_id))
 
     def updateUnknownTablePrices(self, db):
@@ -571,7 +574,7 @@ if __name__ == "__main__":
             filters.append(input("Enter a filter name:"))
 
         for filter in filters:
-            walmart.checkWalmart(database, filter)
+            walmart.checkWalmartByFilter(database, filter)
         # if response == "1":
         #     print("Enter the filter name")
         #     filter1 = input()

@@ -237,14 +237,21 @@ class sql:
         :rtype:
         """
         cursor = self.mydb.cursor()
-        query = "SELECT SKU FROM Walmart WHERE Name=''"
+        query = "SELECT SKU FROM Walmart WHERE Name IS NULL"
         cursor.execute(query)
         result = cursor.fetchall()
         cursor.close()
         print("{} results found that do not have a name or UPC".format(len(result)))
         return result
 
+    def executeQueryWithReturn(self,query):
+        cursor = self.mydb.cursor()
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def close(self):
         self.mydb.close()
-# test =  sql()
+# test=sql()
 # test.emptyTitles()
