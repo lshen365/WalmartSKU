@@ -43,21 +43,21 @@ class Walmart:
         self.driver.quit()
         print("Chrome Driver Quit")
 
-    def loadUPCAndTitle(self):
-        db = sql()
-        for sku in db.emptyTitles():
-            link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku[0])
-            walmart_json = jsonLocator(link)
+    def loadUPCAndTitle(self,sku):
+        link = "https://www.walmart.com/store/electrode/api/search?query={}".format(sku)
+        print(link)
+        walmart_json = jsonLocator(link)
+        if walmart_json.doesExist():
             try:
-                if walmart_json.doesExist():
-                    db.insertIntoTable(walmart_json.getUPC(), 'UPC', 'Walmart', sku[0])
-                    db.insertIntoTable(walmart_json.getTitle(), 'Name', 'Walmart', sku[0])
-                else:
-                    print(sku[0], " does not exist")
+                db = sql()
+                db.insertIntoTable(walmart_json.getUPC(), 'UPC', 'Walmart', sku)
+                db.insertIntoTable(walmart_json.getTitle(), 'Name', 'Walmart', sku)
+                db.close()
             except:
                 print("Error inserting Title into Database")
-        db.close()
 
+    def parallelLoadUPCAndTitle(self,titles):
+        Parallel(n_jobs=30)(delayed(self.loadUPCAndTitle)(query[0]) for query in titles)
     def filterPrice(self, text):
         """
         Helper function to filter out the price and random unecessary text.
@@ -553,7 +553,7 @@ if __name__ == "__main__":
             walmart.loadDatabase(database)
             walmart.closeChromeDriver()
         elif response == "2":
-            walmart.loadUPCAndTitle()
+            walmart.parallelLoadUPCAndTitle(database.emptyTitles())
     # load local Walmarts
     elif choice == "2":
         print("How many filters do you want to run?\n"

@@ -244,6 +244,12 @@ class sql:
         print("{} results found that do not have a name or UPC".format(len(result)))
         return result
 
+    def executeMany(self,query,values):
+        cursor = self.mydb.cursor()
+        cursor.executemany(query,values)
+        self.mydb.commit()
+        cursor.close()
+
     def executeQueryWithReturn(self,query):
         cursor = self.mydb.cursor()
         cursor.execute(query)
